@@ -888,16 +888,29 @@ function endGame(){
 function createBoothLabels(){
   const frame = document.getElementById('canvas-frame');
   const cvs = document.getElementById('game');
+
   ALL_BOOTHS.forEach(b=>{
     const el = document.createElement('h3');
     el.className = 'booth-label';
+    el.dataset.col = b.col;
+    el.dataset.row = b.row;
     el.textContent = b.name;
-    el.style.left = ((b.col*CELL + CELL/2) / cvs.width * 100) + '%';
-    el.style.top  = ((b.row === 0
-      ? GRID_OFFSET_Y + CELL
-      : b.row*CELL + GRID_OFFSET_Y + CELL) / cvs.height * 100) + '%';
     frame.appendChild(el);
   });
+
+  function positionLabels(){
+    const scaleX = cvs.offsetWidth / cvs.width;
+    const scaleY = cvs.offsetHeight / cvs.height;
+    frame.querySelectorAll('.booth-label').forEach(el=>{
+      const col = +el.dataset.col;
+      const row = +el.dataset.row;
+      el.style.left = ((col*CELL + CELL/2) * scaleX + cvs.offsetLeft) + 'px';
+      el.style.top  = (((row === 0 ? GRID_OFFSET_Y + CELL : row*CELL + GRID_OFFSET_Y + CELL) * scaleY) + cvs.offsetTop) + 'px';
+    });
+  }
+
+  requestAnimationFrame(positionLabels);
+  window.addEventListener('resize', positionLabels);
 }
 
 // ================= INIT =================
