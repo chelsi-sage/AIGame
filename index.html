@@ -139,7 +139,39 @@
     display:flex; align-items:center; justify-content:center;
     background: #6B5A3E;
   }
-  canvas{ display:block; width: auto; height: auto; max-width: 100%; max-height: 100%; background: #6B5A3E; }
+  
+   canvas{ display:block; width: auto; height: auto; max-width: 100%; max-height: 100%; background: #6B5A3E; }
+
+  .booth-label{
+    position:absolute; margin:0;
+    font-family:'MedievalSharp',cursive;
+    font-size:16px; line-height:1;
+    color:var(--parchment);
+    transform:translateX(-50%);
+    pointer-events:none;
+    white-space:nowrap;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  /* ---------- Controls ---------- */
+  #controls{ display:flex; align-items:center; justify-content:space-between; padding: 4px 6px; }
+  #dpad{ display:grid; grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px 44px; gap:4px; }
+  #dpad button{
+    border:none; border-radius:10px; background: #8B7A5A; color: var(--ink); font-size:17px;
+    box-shadow: 0 2px 0 #5E5238; cursor:pointer;
+  }
+  #dpad button:active{ transform: translateY(1px); box-shadow:none; }
+  #dpad .up{ grid-column:2; grid-row:1; }
+  #dpad .left{ grid-column:1; grid-row:2; }
+  #dpad .down{ grid-column:2; grid-row:2; }
+  #dpad .right{ grid-column:3; grid-row:2; }
+
+  #interact-btn{
+    width: 84px; height:84px; border-radius: 50%; border:none;
+    background: var(--gold); color: var(--ink); font-family:'MedievalSharp', cursive;
+    font-size: 14px; font-weight:700; box-shadow: 0 3px 0 var(--gold-dark); cursor:pointer;
+  }
+  #interact-btn:active{ transform: translateY(2px); box-shadow:none; }
 
   #hint{ text-align:center; font-size: 10px; color: rgba(241,228,195,0.5); flex: none; }
 
@@ -181,7 +213,7 @@
 
     <div id="hud">
       <div class="hud-item"><div class="l">SCORE</div><div class="v" id="score-val">0</div></div>
-      <div class="hud-item"><div class="l">DIMA'S TEST</div><div class="v" id="streak-val">0</div></div>
+      <div class="hud-item"><div class="l">Best Streak</div><div class="v" id="streak-val">0</div></div>
       <div class="hud-item"><div class="l">STRIKES</div><div id="strikes-icons"></div></div>
       <div id="daynight">
         <div class="l" style="font-size:10px;color:var(--fog)">SHIFT</div>
@@ -234,7 +266,7 @@
         <div><div class="n" id="end-score">0</div><div class="l">Score</div></div>
         <div><div class="n" id="end-delivered">0</div><div class="l">Delivered</div></div>
         <div><div class="n" id="end-mistakes">0</div><div class="l">Mistakes</div></div>
-        <div><div class="n" id="end-streak">0</div><div class="l">Dima's Test</div></div>
+        <div><div class="n" id="end-streak">0</div><div class="l">Best Streak</div></div>
       </div>
       <p id="end-monsters" style="font-size:12px"></p>
       <button id="restart-btn">Work Another Shift</button>
@@ -883,12 +915,42 @@ function endGame(){
   document.getElementById('end-overlay').style.display = 'flex';
 }
 
+function createBoothLabels(){
+  const frame = document.getElementById('canvas-frame');
+  const cvs = document.getElementById('game');
+
+  ALL_BOOTHS.forEach(b=>{
+    const el = document.createElement('h3');
+    el.className = 'booth-label';
+    el.dataset.col = b.col;
+    el.dataset.row = b.row;
+    el.textContent = b.name;
+    frame.appendChild(el);
+  });
+
+  function positionLabels(){
+    const scaleX = cvs.offsetWidth / cvs.width;
+    const scaleY = cvs.offsetHeight / cvs.height;
+    frame.querySelectorAll('.booth-label').forEach(el=>{
+      const col = +el.dataset.col;
+      const row = +el.dataset.row;
+      el.style.left = ((col*CELL + CELL/2) * scaleX + cvs.offsetLeft) + 'px';
+      el.style.top  = (((row === 0 ? GRID_OFFSET_Y + CELL : row*CELL + GRID_OFFSET_Y + CELL) * scaleY) + cvs.offsetTop) + 'px';
+    });
+  }
+
+  requestAnimationFrame(positionLabels);
+  window.addEventListener('resize', positionLabels);
+  new ResizeObserver(positionLabels).observe(cvs);
+}
+
 // ================= INIT =================
 function init(){
   initDom();
   unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
   renderHud();
   draw();
+  createBoothLabels();
 }
 init();
 
