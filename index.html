@@ -212,6 +212,7 @@
   <div id="wrap">
 
     <div id="hud">
+      <div class="hud-item"><div class="l">LEVEL</div><div class="v" id="level-val">1</div></div>
       <div class="hud-item"><div class="l">SCORE</div><div class="v" id="score-val">0</div></div>
       <div class="hud-item"><div class="l">Best Streak</div><div class="v" id="streak-val">0</div></div>
       <div class="hud-item"><div class="l">STRIKES</div><div id="strikes-icons"></div></div>
@@ -263,6 +264,7 @@
     <div class="modal-box">
       <h2>Shift's Over!</h2>
       <div class="stats-line">
+        <div><div class="n" id="end-level">1</div><div class="l">Level</div></div>
         <div><div class="n" id="end-score">0</div><div class="l">Score</div></div>
         <div><div class="n" id="end-delivered">0</div><div class="l">Delivered</div></div>
         <div><div class="n" id="end-mistakes">0</div><div class="l">Mistakes</div></div>
@@ -493,6 +495,7 @@ function toggleMute(){
 
 // ================= RENDER: HUD / CARD / BELT =================
 function renderHud(){
+  document.getElementById('level-val').textContent = speedLevel + 1;
   document.getElementById('score-val').textContent = score;
   document.getElementById('streak-val').textContent = streak;
   const icons = document.getElementById('strikes-icons');
@@ -683,6 +686,7 @@ function resolve(choiceId){
   flashCard(good);
   floatPop(message, color);
   if(good) playCorrect(); else playWrong();
+  updateSpeedLevel();
   renderHud();
 
   if(strikes <= 0){
@@ -691,7 +695,6 @@ function resolve(choiceId){
   }
 
   updateUnlocks();
-  updateSpeedLevel();
 
   setTimeout(()=>{
     advanceQueue();
@@ -902,6 +905,7 @@ function startGame(){
 function endGame(){
   running = false;
   playGameOver();
+  document.getElementById('end-level').textContent = speedLevel + 1;
   document.getElementById('end-score').textContent = score;
   document.getElementById('end-delivered').textContent = delivered;
   document.getElementById('end-mistakes').textContent = mistakes + missedCount;
