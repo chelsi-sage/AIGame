@@ -1,0 +1,4 @@
+id,name,description,category,enabled
+placeholder-001,Placeholder One,First example row. Replace this file once the theme is known.,example,true
+placeholder-002,Placeholder Two,"Second example row, demonstrating a quoted field containing a comma.",example,true
+placeholder-003,Placeholder Three,Disabled row. The build script keeps it; the game can filter on enabled.,example,false
