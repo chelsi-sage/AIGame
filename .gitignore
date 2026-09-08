@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Local env overrides
+*.local
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

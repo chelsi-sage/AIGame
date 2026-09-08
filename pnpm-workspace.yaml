@@ -1,0 +1,4 @@
+# pnpm 12 reads its settings from this file rather than package.json.
+# esbuild (a Vite dependency) needs its install script to link its platform binary.
+allowBuilds:
+  esbuild: true
