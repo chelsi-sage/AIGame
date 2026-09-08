@@ -156,10 +156,12 @@
     font-family:'MedievalSharp',cursive;
     font-size:16px; line-height:1;
     color:var(--parchment);
+    background:var(--ink);
+    padding:2px 6px;
+    border-radius:5px;
     transform:translateX(-50%);
     pointer-events:none;
     white-space:nowrap;
-    text-shadow:0 1px 3px rgba(0,0,0,0.8);
   }
 
   /* ---------- Controls ---------- */
@@ -263,6 +265,8 @@
         <div class="r"><b>🐉 Dragon</b><br>Refuses anything flammable</div>
         <div class="r"><b>👻 Ghost</b><br>Can't hold physical objects</div>
         <div class="r"><b>🧌 Troll</b><br>Hates anything with soap</div>
+        <div class="r"><b>🧟 Zombie</b><br>Hates getting wet</div>
+        <div class="r"><b>🧚 Fairy</b><br>Can't carry anything heavy</div>
       </div>
       <p style="font-size:11.5px">More booths open — and things get weirder — as your shift goes on. If nobody can take a parcel, walk it to the Return booth.</p>
       <button id="start-btn">Start Shift</button>
@@ -887,17 +891,13 @@ function drawBoothCaptions(){
     const x = b.col*CELL + CELL/2;
     ctx.fillStyle = unlocked ? '#F1E4C3' : 'rgba(241,228,195,0.4)';
     if(b.row === 0){
-      ctx.font = "bold 11px 'MedievalSharp', cursive";
-      ctx.textBaseline = 'top';
-      ctx.fillText(b.name, x, 2);
       ctx.font = '8.5px sans-serif';
-      ctx.fillText(b.rule, x, 15);
+      ctx.textBaseline = 'top';
+      ctx.fillText(b.rule, x, 2);
     } else if(b.row === ROWS-1){
-      ctx.font = "bold 11px 'MedievalSharp', cursive";
-      ctx.textBaseline = 'top';
-      ctx.fillText(b.name, x, GRID_OFFSET_Y + ROWS*CELL + 2);
       ctx.font = '8.5px sans-serif';
-      ctx.fillText(b.rule, x, GRID_OFFSET_Y + ROWS*CELL + 15);
+      ctx.textBaseline = 'top';
+      ctx.fillText(b.rule, x, GRID_OFFSET_Y + ROWS*CELL + 2);
     }
   });
 }
