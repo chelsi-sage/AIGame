@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rush Hour Diner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --diner-red: #C1443C;
+    --diner-red-dark: #9B342D;
+    --cream: #F4EAD5;
+    --teal: #2E7D6E;
+    --teal-dark: #1F5A4F;
+    --mustard: #E8A93A;
+    --charcoal: #2B2320;
+    --steel: #97A0A8;
+    --steel-dark: #6B747B;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--charcoal);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height:100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #app{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding: 10px;
+  }
+
+  #game-wrap{
+    position: relative;
+    width: 630px;
+    max-width: 96vw;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: var(--diner-red);
+    border-radius: 14px;
+    padding: 10px 18px;
+    box-shadow: 0 3px 0 var(--diner-red-dark);
+  }
+  #hud-top .label{
+    font-family:'Fredoka', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: rgba(244,234,213,0.85);
+    margin-bottom: -2px;
+  }
+  #hud-top .value{
+    font-family:'Fredoka', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--cream);
+    line-height:1;
+  }
+  #hud-top .stat{ text-align:center; }
+  #hud-top .stat.timer .value{ color: var(--mustard); }
+
+  #orders-panel{
+    display:flex;
+    gap: 10px;
+    min-height: 76px;
+  }
+  .order-card{
+    flex: 1;
+    background: var(--cream);
+    color: var(--charcoal);
+    border-radius: 12px;
+    padding: 8px 10px 10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    min-width: 0;
+  }
+  .order-card .icons{
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-align:center;
+  }
+  .order-card .name{
+    font-family:'Fredoka', sans-serif;
+    font-size: 11px;
+    text-align:center;
+    color: var(--teal-dark);
+    font-weight:600;
+    margin-top:2px;
+  }
+  .order-card .bar-track{
+    height: 6px;
+    background: rgba(43,35,32,0.15);
+    border-radius: 4px;
+    margin-top: 6px;
+    overflow:hidden;
+  }
+  .order-card .bar-fill{
+    height:100%;
+    background: var(--teal);
+    border-radius: 4px;
+    transition: width 0.1s linear, background 0.3s;
+  }
+  .order-empty{
+    flex:1;
+    border: 2px dashed rgba(244,234,213,0.25);
+    border-radius: 12px;
+  }
+
+  /* ---------- Canvas ---------- */
+  #canvas-frame{
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 0 6px var(--steel-dark);
+  }
+  canvas{
+    display:block;
+    width: 100%;
+    height: auto;
+    background: var(--cream);
+  }
+
+  /* floating score popups */
+  .float-pop{
+    position:absolute;
+    font-family:'Fredoka', sans-serif;
+    font-weight:700;
+    font-size: 20px;
+    pointer-events:none;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.35);
+    animation: floatUp 1s ease-out forwards;
+  }
+  @keyframes floatUp{
+    0%{ transform: translateY(0); opacity:1; }
+    100%{ transform: translateY(-46px); opacity:0; }
+  }
+
+  /* ---------- Controls ---------- */
+  #controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 4px 6px;
+  }
+  #dpad{
+    display:grid;
+    grid-template-columns: 46px 46px 46px;
+    grid-template-rows: 46px 46px 46px;
+    gap:4px;
+  }
+  #dpad button{
+    border:none;
+    border-radius:10px;
+    background: var(--steel);
+    color: var(--charcoal);
+    font-size:18px;
+    box-shadow: 0 2px 0 var(--steel-dark);
+    cursor:pointer;
+  }
+  #dpad button:active{ transform: translateY(1px); box-shadow:none; }
+  #dpad .up{ grid-column:2; grid-row:1; }
+  #dpad .left{ grid-column:1; grid-row:2; }
+  #dpad .down{ grid-column:2; grid-row:2; }
+  #dpad .right{ grid-column:3; grid-row:2; }
+
+  #interact-btn{
+    width: 84px; height:84px;
+    border-radius: 50%;
+    border:none;
+    background: var(--mustard);
+    color: var(--charcoal);
+    font-family:'Fredoka', sans-serif;
+    font-size: 15px;
+    font-weight:700;
+    box-shadow: 0 3px 0 #b9822a;
+    cursor:pointer;
+  }
+  #interact-btn:active{ transform: translateY(2px); box-shadow:none; }
+
+  #hint{
+    text-align:center;
+    font-size: 12px;
+    color: rgba(244,234,213,0.55);
+    margin-top: -2px;
+  }
+
+  /* ---------- Modals ---------- */
+  .modal-overlay{
+    position:absolute;
+    inset:0;
+    background: rgba(20,15,13,0.82);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius: 14px;
+    z-index: 20;
+    text-align:center;
+    padding: 20px;
+  }
+  .modal-box{ max-width: 420px; }
+  .modal-box h1{
+    font-family:'Fredoka', sans-serif;
+    font-size: 34px;
+    margin: 0 0 8px;
+    color: var(--mustard);
+  }
+  .modal-box h2{
+    font-family:'Fredoka', sans-serif;
+    font-size: 26px;
+    margin: 0 0 14px;
+    color: var(--cream);
+  }
+  .modal-box p{
+    font-size: 14px;
+    line-height:1.6;
+    color: rgba(244,234,213,0.85);
+    margin: 6px 0;
+  }
+  .modal-box .stats-line{
+    display:flex;
+    gap: 18px;
+    justify-content:center;
+    margin: 14px 0;
+  }
+  .modal-box .stats-line div{
+    background: rgba(244,234,213,0.08);
+    border-radius: 10px;
+    padding: 10px 16px;
+  }
+  .modal-box .stats-line .n{
+    font-family:'Fredoka', sans-serif;
+    font-size: 22px;
+    color: var(--mustard);
+  }
+  .modal-box .stats-line .l{
+    font-size: 11px;
+    color: rgba(244,234,213,0.7);
+  }
+  .modal-box button{
+    font-family:'Fredoka', sans-serif;
+    font-size: 17px;
+    font-weight:600;
+    padding: 12px 30px;
+    border-radius: 30px;
+    border:none;
+    background: var(--teal);
+    color: var(--cream);
+    cursor:pointer;
+    box-shadow: 0 3px 0 var(--teal-dark);
+    margin-top: 6px;
+  }
+  .modal-box button:active{ transform: translateY(2px); box-shadow:none; }
+  .recipe-key{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .recipe-key div{ text-align:center; }
+  .recipe-key .icons{ font-size:20px; }
+
+  @media (max-width: 480px){
+    #game-wrap{ width: 100%; }
+    .order-card .icons{ font-size: 18px; }
+    #dpad button, #interact-btn{ font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="game-wrap">
+
+    <div id="hud-top">
+      <div class="stat">
+        <div class="label">Score</div>
+        <div class="value" id="score-val">0</div>
+      </div>
+      <div class="stat timer">
+        <div class="label">Time Left</div>
+        <div class="value" id="time-val">2:30</div>
+      </div>
+      <div class="stat">
+        <div class="label">Served</div>
+        <div class="value" id="served-val">0</div>
+      </div>
+    </div>
+
+    <div id="orders-panel"></div>
+
+    <div id="canvas-frame">
+      <canvas id="game" width="630" height="420"></canvas>
+      <div id="start-overlay" class="modal-overlay">
+        <div class="modal-box">
+          <h1>Rush Hour Diner</h1>
+          <p>Grab ingredients, prep them, and rush finished plates to the delivery bell before the orders expire.</p>
+          <div class="recipe-key">
+            <div><div class="icons">🥬 🍅</div>Salad</div>
+            <div><div class="icons">🍞 🥩 🥬</div>Burger</div>
+            <div><div class="icons">🍞 🥩 🥬 🍅</div>Deluxe</div>
+          </div>
+          <p style="font-size:12px;opacity:0.75">Move: Arrow keys / WASD &nbsp;·&nbsp; Interact: Space / E<br>Chop veggies with repeated taps. Watch the stove — patties burn!</p>
+          <button id="start-btn">Start Shift</button>
+        </div>
+      </div>
+      <div id="end-overlay" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+          <h2>Shift Over!</h2>
+          <div class="stats-line">
+            <div><div class="n" id="end-score">0</div><div class="l">Score</div></div>
+            <div><div class="n" id="end-served">0</div><div class="l">Served</div></div>
+            <div><div class="n" id="end-missed">0</div><div class="l">Missed</div></div>
+          </div>
+          <button id="restart-btn">Run It Again</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <div id="dpad">
+        <button class="up" data-dir="up">▲</button>
+        <button class="left" data-dir="left">◀</button>
+        <button class="down" data-dir="down">▼</button>
+        <button class="right" data-dir="right">▶</button>
+      </div>
+      <button id="interact-btn">USE / DROP</button>
+    </div>
+    <div id="hint">WASD / Arrows to move &middot; Space or E to interact</div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- CONFIG ----------------
+  const COLS = 9, ROWS = 6, CELL = 70;
+  const GAME_DURATION = 150000; // 2:30 in ms
+  const CHOP_HITS_NEEDED = 3;
+  const COOK_TIME = 6500;   // ms raw -> cooked
+  const BURN_TIME = 5000;   // ms cooked -> burnt if left
+  const MAX_ORDERS = 3;
+  const PLAYER_SPEED = 210; // px/sec
+  const PLAYER_HALF = 21;
+
+  const GRID = [
+    "##B###P##",
+    "#.......#",
+    "L.......T",
+    "C.......S",
+    "#.......#",
+    "##D#X#R##",
+  ];
+
+  const STATION_ICON = {
+    'B':'🍞', 'P':'🥩', 'L':'🥬', 'T':'🍅',
+    'C':'🔪', 'S':'🍳', 'D':'🍽️', 'X':'🔔', 'R':'🗑️'
+  };
+
+  const ITEM_ICON_RAW = { bun:'🍞', patty:'🥩', lettuce:'🥬', tomato:'🍅', plate:'🍽️' };
+  const ITEM_ICON_DONE = { bun:'🍞', patty:'🥩', lettuce:'🥗', tomato:'🍅', plate:'🍽️' };
+
+  const RECIPES = [
+    { name:'Salad',        need:['lettuce','tomato'],          icons:['🥬','🍅'],          points:10, time:32000 },
+    { name:'Burger',       need:['bun','patty','lettuce'],     icons:['🍞','🥩','🥬'],     points:16, time:40000 },
+    { name:'Deluxe Burger',need:['bun','patty','lettuce','tomato'], icons:['🍞','🥩','🥬','🍅'], points:26, time:52000 },
+  ];
+
+  // ---------------- STATE ----------------
+  let canvas, ctx;
+  let running = false;
+  let lastTs = 0;
+  let gameTimeLeft = GAME_DURATION;
+  let score = 0, served = 0, missed = 0;
+  let orders = [];
+  let orderSpawnTimer = 0;
+  let nextOrderId = 1;
+
+  const stationItems = {}; // key "r,c" -> item or null, for '#','C','S' cells only
+
+  const player = {
+    x: 4.5 * CELL, y: 2.5 * CELL,
+    dir: 'down',
+    hand: null,
+  };
+
+  const keys = {};
+
+  // ---------------- HELPERS ----------------
+  function cellChar(r,c){
+    if(r<0||r>=ROWS||c<0||c>=COLS) return '#';
+    return GRID[r][c];
+  }
+  function isBlocking(r,c){
+    return cellChar(r,c) !== '.';
+  }
+  function isStorable(ch){
+    return ch === '#' || ch === 'C' || ch === 'S';
+  }
+  function key(r,c){ return r+','+c; }
+
+  function createItem(type){
+    switch(type){
+      case 'bun': return { type:'bun' };
+      case 'patty': return { type:'patty', cookState:'raw', cookTimer:0 };
+      case 'lettuce': return { type:'lettuce', chopped:false, chopProgress:0 };
+      case 'tomato': return { type:'tomato', chopped:false, chopProgress:0 };
+      case 'plate': return { type:'plate', ingredients:[] };
+      default: return null;
+    }
+  }
+
+  function isFinished(item){
+    if(!item) return false;
+    if(item.type === 'bun') return true;
+    if(item.type === 'lettuce' || item.type === 'tomato') return item.chopped === true;
+    if(item.type === 'patty') return item.cookState === 'cooked';
+    return false;
+  }
+  function isRuined(item){
+    return item && item.type === 'patty' && item.cookState === 'burnt';
+  }
+
+  function itemIcon(item){
+    if(!item) return '';
+    if(item.type === 'patty'){
+      if(item.cookState === 'burnt') return '🥩💥';
+      return ITEM_ICON_RAW.patty;
+    }
+    if((item.type==='lettuce'||item.type==='tomato') && item.chopped) return ITEM_ICON_DONE[item.type];
+    return ITEM_ICON_RAW[item.type];
+  }
+
+  function recipeKeyList(recipe){ return recipe.need.slice().sort(); }
+  function plateKeyList(plate){ return plate.ingredients.map(i=>i.type).sort(); }
+  function arraysEqual(a,b){
+    if(a.length!==b.length) return false;
+    for(let i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
+    return true;
+  }
+
+  // ---------------- ORDERS ----------------
+  function spawnOrder(){
+    if(orders.length >= MAX_ORDERS) return;
+    const recipe = RECIPES[Math.floor(Math.random()*RECIPES.length)];
+    orders.push({ id: nextOrderId++, recipe, timeLeft: recipe.time, total: recipe.time });
+    renderOrders();
+  }
+
+  function renderOrders(){
+    const panel = document.getElementById('orders-panel');
+    panel.innerHTML = '';
+    for(let i=0;i<MAX_ORDERS;i++){
+      const o = orders[i];
+      if(!o){
+        const empty = document.createElement('div');
+        empty.className = 'order-empty';
+        panel.appendChild(empty);
+        continue;
+      }
+      const card = document.createElement('div');
+      card.className = 'order-card';
+      card.dataset.id = o.id;
+      const frac = Math.max(0, o.timeLeft / o.total);
+      const color = frac > 0.5 ? '#2E7D6E' : (frac > 0.22 ? '#E8A93A' : '#C1443C');
+      card.innerHTML =
+        '<div class="icons">'+o.recipe.icons.join(' ')+'</div>'+
+        '<div class="name">'+o.recipe.name+'</div>'+
+        '<div class="bar-track"><div class="bar-fill" style="width:'+(frac*100)+'%;background:'+color+'"></div></div>';
+      panel.appendChild(card);
+    }
+  }
+
+  function updateOrderBarsOnly(){
+    const cards = document.querySelectorAll('.order-card');
+    cards.forEach(card=>{
+      const id = Number(card.dataset.id);
+      const o = orders.find(x=>x.id===id);
+      if(!o) return;
+      const frac = Math.max(0, o.timeLeft / o.total);
+      const color = frac > 0.5 ? '#2E7D6E' : (frac > 0.22 ? '#E8A93A' : '#C1443C');
+      const fill = card.querySelector('.bar-fill');
+      fill.style.width = (frac*100)+'%';
+      fill.style.background = color;
+    });
+  }
+
+  // ---------------- FLOATING TEXT ----------------
+  function floatPop(text, color){
+    const frame = document.getElementById('canvas-frame');
+    const rect = canvas.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
+    const scale = rect.width / canvas.width;
+    const px = (player.x) * scale;
+    const py = (player.y - 30) * scale;
+    const el = document.createElement('div');
+    el.className = 'float-pop';
+    el.textContent = text;
+    el.style.color = color;
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+    frame.appendChild(el);
+    setTimeout(()=> el.remove(), 1000);
+  }
+
+  // ---------------- INPUT ----------------
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d',' ','e'].includes(k)) e.preventDefault();
+    keys[k] = true;
+    if(k === ' ' || k === 'e') doInteract();
+  });
+  window.addEventListener('keyup', (e)=>{
+    keys[e.key.toLowerCase()] = false;
+  });
+
+  function bindHoldButton(el, onDown){
+    let heldDir = null;
+    const start = (dir)=>{ heldDir = dir; keys['_touch_'+dir] = true; };
+    const end = (dir)=>{ keys['_touch_'+dir] = false; };
+    el.addEventListener('touchstart', (e)=>{ e.preventDefault(); onDown(); }, {passive:false});
+    el.addEventListener('mousedown', (e)=>{ e.preventDefault(); onDown(); });
+  }
+
+  document.querySelectorAll('#dpad button').forEach(btn=>{
+    const dir = btn.dataset.dir;
+    const set = (v)=>{ keys['_touch_'+dir] = v; };
+    btn.addEventListener('touchstart', e=>{ e.preventDefault(); set(true); }, {passive:false});
+    btn.addEventListener('touchend', e=>{ e.preventDefault(); set(false); }, {passive:false});
+    btn.addEventListener('mousedown', e=>{ e.preventDefault(); set(true); });
+    btn.addEventListener('mouseup', e=>{ e.preventDefault(); set(false); });
+    btn.addEventListener('mouseleave', e=>{ set(false); });
+  });
+
+  document.getElementById('interact-btn').addEventListener('click', (e)=>{
+    e.preventDefault();
+    doInteract();
+  });
+
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('restart-btn').addEventListener('click', startGame);
+
+  // ---------------- INTERACTION LOGIC ----------------
+  function facingTile(){
+    const pr = Math.floor(player.y / CELL);
+    const pc = Math.floor(player.x / CELL);
+    let dr=0, dc=0;
+    if(player.dir === 'up') dr=-1;
+    else if(player.dir === 'down') dr=1;
+    else if(player.dir === 'left') dc=-1;
+    else if(player.dir === 'right') dc=1;
+    return { r: pr+dr, c: pc+dc };
+  }
+
+  function doInteract(){
+    if(!running) return;
+    const { r, c } = facingTile();
+    const ch = cellChar(r,c);
+    if(ch === '#' || ch === '.') { /* handled below for '#' */ }
+    if(ch === '.') return;
+
+    if(ch === 'B' || ch === 'P' || ch === 'L' || ch === 'T'){
+      if(!player.hand){
+        const typeMap = { B:'bun', P:'patty', L:'lettuce', T:'tomato' };
+        player.hand = createItem(typeMap[ch]);
+      }
+      return;
+    }
+
+    if(ch === 'D'){
+      if(!player.hand){
+        player.hand = createItem('plate');
+      }
+      return;
+    }
+
+    if(ch === 'R'){
+      if(player.hand){
+        player.hand = null;
+        floatPop('tossed', '#C1443C');
+      }
+      return;
+    }
+
+    if(ch === 'X'){
+      if(player.hand && player.hand.type === 'plate'){
+        tryDeliver(player.hand);
+      }
+      return;
+    }
+
+    if(ch === 'C'){
+      const k = key(r,c);
+      let boardItem = stationItems[k] || null;
+      if(!boardItem){
+        if(player.hand && (player.hand.type==='lettuce' || player.hand.type==='tomato')){
+          stationItems[k] = player.hand;
+          player.hand = null;
+        }
+      } else {
+        if(!boardItem.chopped){
+          if(!player.hand){
+            boardItem.chopProgress++;
+            if(boardItem.chopProgress >= CHOP_HITS_NEEDED){
+              boardItem.chopped = true;
+            }
+          } else if(player.hand.type === 'plate'){
+            // can't add unchopped veg to plate
+          }
+        } else {
+          if(!player.hand){
+            player.hand = boardItem;
+            stationItems[k] = null;
+          } else if(player.hand.type === 'plate'){
+            player.hand.ingredients.push(boardItem);
+            stationItems[k] = null;
+          }
+        }
+      }
+      return;
+    }
+
+    if(ch === 'S'){
+      const k = key(r,c);
+      let stoveItem = stationItems[k] || null;
+      if(!stoveItem){
+        if(player.hand && player.hand.type === 'patty' && player.hand.cookState === 'raw'){
+          player.hand.cookState = 'cooking';
+          player.hand.cookTimer = 0;
+          stationItems[k] = player.hand;
+          player.hand = null;
+        }
+      } else {
+        if(stoveItem.cookState === 'cooked' || stoveItem.cookState === 'burnt'){
+          if(!player.hand){
+            player.hand = stoveItem;
+            stationItems[k] = null;
+          } else if(player.hand.type === 'plate' && stoveItem.cookState === 'cooked'){
+            player.hand.ingredients.push(stoveItem);
+            stationItems[k] = null;
+          }
+        }
+        // if still cooking, do nothing (must wait)
+      }
+      return;
+    }
+
+    if(ch === '#'){
+      const k = key(r,c);
+      let counterItem = stationItems[k] || null;
+      if(!counterItem){
+        if(player.hand){
+          stationItems[k] = player.hand;
+          player.hand = null;
+        }
+      } else {
+        if(counterItem.type === 'plate' && player.hand && player.hand.type !== 'plate' && isFinished(player.hand)){
+          counterItem.ingredients.push(player.hand);
+          player.hand = null;
+        } else if(!player.hand){
+          player.hand = counterItem;
+          stationItems[k] = null;
+        }
+      }
+      return;
+    }
+  }
+
+  function tryDeliver(plate){
+    const plateKeys = plateKeyList(plate);
+    if(plateKeys.length === 0) return;
+    let matchIdx = -1;
+    for(let i=0;i<orders.length;i++){
+      if(arraysEqual(plateKeys, recipeKeyList(orders[i].recipe))){ matchIdx = i; break; }
+    }
+    if(matchIdx === -1){
+      floatPop('no match', '#C1443C');
+      return;
+    }
+    const order = orders[matchIdx];
+    const timeBonus = Math.round(order.recipe.points * 0.4 * (order.timeLeft/order.total));
+    const gained = order.recipe.points + timeBonus;
+    score += gained;
+    served++;
+    orders.splice(matchIdx,1);
+    player.hand = null;
+    floatPop('+'+gained, '#E8A93A');
+    updateHud();
+    renderOrders();
+  }
+
+  // ---------------- MOVEMENT ----------------
+  function anyKey(...names){
+    return names.some(n => keys[n]);
+  }
+
+  function updatePlayer(dt){
+    let vx=0, vy=0;
+    if(anyKey('arrowup','w','_touch_up')) vy -= 1;
+    if(anyKey('arrowdown','s','_touch_down')) vy += 1;
+    if(anyKey('arrowleft','a','_touch_left')) vx -= 1;
+    if(anyKey('arrowright','d','_touch_right')) vx += 1;
+
+    if(vx !== 0 || vy !== 0){
+      const len = Math.hypot(vx,vy);
+      vx/=len; vy/=len;
+      if(Math.abs(vx) > Math.abs(vy)) player.dir = vx>0 ? 'right':'left';
+      else if(vy!==0) player.dir = vy>0 ? 'down':'up';
+    }
+
+    const moveX = vx * PLAYER_SPEED * dt;
+    const moveY = vy * PLAYER_SPEED * dt;
+
+    // move x, check collision
+    let newX = player.x + moveX;
+    if(!collides(newX, player.y)) player.x = newX;
+    let newY = player.y + moveY;
+    if(!collides(player.x, newY)) player.y = newY;
+  }
+
+  function collides(x,y){
+    const left = x - PLAYER_HALF, right = x + PLAYER_HALF;
+    const top = y - PLAYER_HALF, bottom = y + PLAYER_HALF;
+    const c0 = Math.floor(left/CELL), c1 = Math.floor(right/CELL);
+    const r0 = Math.floor(top/CELL), r1 = Math.floor(bottom/CELL);
+    for(let r=r0;r<=r1;r++){
+      for(let c=c0;c<=c1;c++){
+        if(isBlocking(r,c)) return true;
+      }
+    }
+    return false;
+  }
+
+  // ---------------- GAME LOOP ----------------
+  function updateStations(dt){
+    for(const k in stationItems){
+      const item = stationItems[k];
+      if(!item) continue;
+      if(item.type === 'patty'){
+        if(item.cookState === 'cooking'){
+          item.cookTimer += dt*1000;
+          if(item.cookTimer >= COOK_TIME){
+            item.cookState = 'cooked';
+            item.cookTimer = 0;
+          }
+        } else if(item.cookState === 'cooked'){
+          item.cookTimer += dt*1000;
+          if(item.cookTimer >= BURN_TIME){
+            item.cookState = 'burnt';
+          }
+        }
+      }
+    }
+  }
+
+  function updateOrders(dt){
+    orderSpawnTimer -= dt*1000;
+    if(orderSpawnTimer <= 0 && gameTimeLeft > 18000){
+      spawnOrder();
+      orderSpawnTimer = 9000 + Math.random()*6000;
+    }
+    let changed = false;
+    for(let i=orders.length-1;i>=0;i--){
+      orders[i].timeLeft -= dt*1000;
+      if(orders[i].timeLeft <= 0){
+        orders.splice(i,1);
+        missed++;
+        changed = true;
+      }
+    }
+    if(changed){ renderOrders(); updateHud(); }
+    else updateOrderBarsOnly();
+  }
+
+  function updateHud(){
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('served-val').textContent = served;
+    const secs = Math.max(0, Math.ceil(gameTimeLeft/1000));
+    const m = Math.floor(secs/60), s = secs%60;
+    document.getElementById('time-val').textContent = m+':'+(s<10?'0':'')+s;
+  }
+
+  function loop(ts){
+    if(!running) return;
+    if(!lastTs) lastTs = ts;
+    let dt = (ts - lastTs)/1000;
+    if(dt > 0.05) dt = 0.05;
+    lastTs = ts;
+
+    gameTimeLeft -= dt*1000;
+    if(gameTimeLeft <= 0){
+      gameTimeLeft = 0;
+      endGame();
+    }
+
+    updatePlayer(dt);
+    updateStations(dt);
+    updateOrders(dt);
+    updateHud();
+    draw();
+
+    if(running) requestAnimationFrame(loop);
+  }
+
+  // ---------------- DRAW ----------------
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        drawCell(r,c);
+      }
+    }
+    drawPlayer();
+  }
+
+  function drawCell(r,c){
+    const x = c*CELL, y = r*CELL;
+    const ch = GRID[r][c];
+
+    if(ch === '.'){
+      const checker = (r+c)%2===0;
+      ctx.fillStyle = checker ? '#F4EAD5' : '#ECDFC2';
+      ctx.fillRect(x,y,CELL,CELL);
+      return;
+    }
+
+    // station / counter background
+    ctx.fillStyle = '#97A0A8';
+    ctx.fillRect(x,y,CELL,CELL);
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x+1,y+1,CELL-2,CELL-2);
+
+    // colored tint per type
+    const tint = {
+      B:'#E8C97A', P:'#D98B7A', L:'#9FCB8E', T:'#E08672',
+      C:'#C7CDD2', S:'#C4635A', D:'#DDE3E6', X:'#E8A93A', R:'#6B747B'
+    }[ch];
+    if(tint){
+      ctx.fillStyle = tint;
+      ctx.fillRect(x+3,y+3,CELL-6,CELL-6);
+    }
+
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.55;
+    ctx.fillText(STATION_ICON[ch] || '', x+CELL/2, y+CELL/2);
+    ctx.globalAlpha = 1;
+
+    // held item on storable stations
+    if(isStorable(ch)){
+      const item = stationItems[key(r,c)];
+      if(item){
+        drawHeldItemOnStation(item, x, y);
+      }
+    }
+  }
+
+  function drawHeldItemOnStation(item, x, y){
+    ctx.font = '30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if(item.type === 'plate'){
+      ctx.fillText('🍽️', x+CELL/2, y+CELL/2+6);
+      if(item.ingredients.length){
+        ctx.font = '15px sans-serif';
+        const row = item.ingredients.map(i=>itemIcon(i)).join('');
+        ctx.fillText(row, x+CELL/2, y+CELL/2-20);
+      }
+      return;
+    }
+
+    ctx.fillText(itemIcon(item), x+CELL/2, y+CELL/2);
+
+    if((item.type==='lettuce'||item.type==='tomato') && !item.chopped){
+      const frac = item.chopProgress / CHOP_HITS_NEEDED;
+      drawMiniBar(x+8, y+CELL-12, CELL-16, frac, '#2E7D6E');
+    }
+    if(item.type === 'patty'){
+      if(item.cookState === 'cooking'){
+        drawMiniBar(x+8, y+CELL-12, CELL-16, item.cookTimer/COOK_TIME, '#E8A93A');
+      } else if(item.cookState === 'cooked'){
+        drawMiniBar(x+8, y+CELL-12, CELL-16, 1 - item.cookTimer/BURN_TIME, '#2E7D6E');
+      } else if(item.cookState === 'burnt'){
+        ctx.font = '13px sans-serif';
+        ctx.fillStyle = '#C1443C';
+        ctx.fillText('BURNT', x+CELL/2, y+CELL-8);
+      }
+    }
+  }
+
+  function drawMiniBar(x,y,w,frac,color){
+    frac = Math.max(0, Math.min(1, frac));
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(x,y,w,6);
+    ctx.fillStyle = color;
+    ctx.fillRect(x,y,w*frac,6);
+  }
+
+  function drawPlayer(){
+    const { x, y } = player;
+    ctx.save();
+    ctx.translate(x,y);
+
+    // body
+    ctx.beginPath();
+    ctx.arc(0,0,PLAYER_HALF,0,Math.PI*2);
+    ctx.fillStyle = '#2E7D6E';
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#1F5A4F';
+    ctx.stroke();
+
+    // facing indicator
+    ctx.beginPath();
+    const dirVec = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[player.dir];
+    ctx.arc(dirVec[0]*PLAYER_HALF*0.75, dirVec[1]*PLAYER_HALF*0.75, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#F4EAD5';
+    ctx.fill();
+
+    // face emoji
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🧑‍🍳', 0, -2);
+
+    ctx.restore();
+
+    // held item above head
+    if(player.hand){
+      ctx.font = '22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if(player.hand.type === 'plate' && player.hand.ingredients.length){
+        ctx.fillText('🍽️', x, y - PLAYER_HALF - 16);
+        ctx.font = '13px sans-serif';
+        ctx.fillText(player.hand.ingredients.map(i=>itemIcon(i)).join(''), x, y - PLAYER_HALF - 32);
+      } else {
+        ctx.fillText(itemIcon(player.hand), x, y - PLAYER_HALF - 14);
+      }
+    }
+  }
+
+  // ---------------- GAME START/END ----------------
+  function resetState(){
+    score = 0; served = 0; missed = 0;
+    gameTimeLeft = GAME_DURATION;
+    orders = [];
+    orderSpawnTimer = 500;
+    for(const k in stationItems) delete stationItems[k];
+    player.x = 4.5*CELL; player.y = 2.5*CELL;
+    player.dir = 'down';
+    player.hand = null;
+    lastTs = 0;
+    renderOrders();
+    updateHud();
+  }
+
+  function startGame(){
+    document.getElementById('start-overlay').style.display = 'none';
+    document.getElementById('end-overlay').style.display = 'none';
+    resetState();
+    running = true;
+    requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    running = false;
+    document.getElementById('end-score').textContent = score;
+    document.getElementById('end-served').textContent = served;
+    document.getElementById('end-missed').textContent = missed;
+    document.getElementById('end-overlay').style.display = 'flex';
+  }
+
+  // ---------------- INIT ----------------
+  function init(){
+    canvas = document.getElementById('game');
+    ctx = canvas.getContext('2d');
+    renderOrders();
+    updateHud();
+    draw();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
