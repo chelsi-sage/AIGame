@@ -180,7 +180,7 @@
 
     <div id="hud">
       <div class="hud-item"><div class="l">SCORE</div><div class="v" id="score-val">0</div></div>
-      <div class="hud-item"><div class="l">STREAK</div><div class="v" id="streak-val">0</div></div>
+      <div class="hud-item"><div class="l">DIMA'S TEST</div><div class="v" id="streak-val">0</div></div>
       <div class="hud-item"><div class="l">STRIKES</div><div id="strikes-icons"></div></div>
       <div id="daynight">
         <div class="l" style="font-size:10px;color:var(--fog)">SHIFT</div>
@@ -242,7 +242,7 @@
         <div><div class="n" id="end-score">0</div><div class="l">Score</div></div>
         <div><div class="n" id="end-delivered">0</div><div class="l">Delivered</div></div>
         <div><div class="n" id="end-mistakes">0</div><div class="l">Mistakes</div></div>
-        <div><div class="n" id="end-streak">0</div><div class="l">Best Streak</div></div>
+        <div><div class="n" id="end-streak">0</div><div class="l">Dima's Test</div></div>
       </div>
       <p id="end-monsters" style="font-size:12px"></p>
       <button id="restart-btn">Work Another Shift</button>
@@ -256,10 +256,10 @@
 "use strict";
 
 // ================= CONFIG =================
-const COLS = 9, ROWS = 6, CELL = 70;
+const COLS = 9, ROWS = 3, CELL = 70;
 const GRID_OFFSET_Y = 30;
 const PLAYER_SPEED = 210;
-const PLAYER_HALF = 21;
+const PLAYER_HALF = 30;
 
 const NIGHT_CYCLE_MS = 14000;
 const RESOLVE_DELAY_MS = 520;
@@ -278,14 +278,14 @@ const MONSTER_ORDER = [
   { id:'troll', name:'Troll', emoji:'🧌', unlockAt:9, row:0, col:7,
     rule:'No soap', fail:'Trolls despise soap!',
     check:(pkg)=> !pkg.flags.soap },
-  { id:'zombie', name:'Zombie', emoji:'🧟', unlockAt:15, row:5, col:1,
+  { id:'zombie', name:'Zombie', emoji:'🧟', unlockAt:15, row:2, col:1,
     rule:'No wet items', fail:'Zombies hate getting wet!',
     check:(pkg)=> !pkg.flags.wet },
-  { id:'fairy', name:'Fairy', emoji:'🧚', unlockAt:22, row:5, col:3,
+  { id:'fairy', name:'Fairy', emoji:'🧚', unlockAt:22, row:2, col:3,
     rule:'No heavy items', fail:"Fairies can't carry anything heavy!",
     check:(pkg)=> !pkg.flags.heavy },
 ];
-const RETURN_BOOTH = { id:'return', name:'Return', emoji:'↩️', row:5, col:5, rule:'Nobody wants this' };
+const RETURN_BOOTH = { id:'return', name:'Return', emoji:'↩️', row:2, col:5, rule:'Nobody wants this' };
 const ALL_BOOTHS = MONSTER_ORDER.concat([RETURN_BOOTH]);
 
 const CURATED = [
@@ -353,7 +353,7 @@ let pkgTimeLimit = 9000;
 let parcelCounter = 0;
 
 const keys = {};
-const player = { x: 4.5*CELL, y: 2.5*CELL, dir:'down' };
+const player = { x: 4.5*CELL, y: 1.5*CELL, dir:'down' };
 
 // ================= HELPERS =================
 function shuffle(arr){
@@ -818,7 +818,7 @@ function drawPlayer(){
   ctx.fillStyle = '#2A1F1A';
   ctx.fill();
 
-  ctx.font = '20px sans-serif';
+  ctx.font = '28px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('🧑‍✈️', 0, -1);
@@ -827,10 +827,10 @@ function drawPlayer(){
   // carried parcel above head
   const active = queue[0];
   if(active){
-    ctx.font = '20px sans-serif';
+    ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(active.emoji, x, y - PLAYER_HALF - 14);
+    ctx.fillText(active.emoji, x, y - PLAYER_HALF - 16);
   }
 }
 
