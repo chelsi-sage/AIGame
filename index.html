@@ -941,6 +941,7 @@ function createBoothLabels(){
 
   requestAnimationFrame(positionLabels);
   window.addEventListener('resize', positionLabels);
+  new ResizeObserver(positionLabels).observe(cvs);
 }
 
 // ================= INIT =================
