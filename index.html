@@ -1,14 +1,889 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AIGame</title>
-    <link rel="stylesheet" href="/src/style.css" />
-  </head>
-  <body>
-    <div id="stage"></div>
-    <p id="status" role="status">Starting…</p>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Delivery Service</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --night: #241733;
+    --night2: #1A1026;
+    --panel: #2E2043;
+    --parchment: #F1E4C3;
+    --parchment-dark: #E3D3A5;
+    --gold: #C9A227;
+    --gold-dark: #96771A;
+    --blood: #8B3A3A;
+    --blood-dark: #6B2A2A;
+    --moss: #5C8A5F;
+    --moss-dark: #3E6640;
+    --fog: rgba(241,228,195,0.7);
+    --ink: #2A1F1A;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: radial-gradient(ellipse at top, #33234A 0%, var(--night) 55%, var(--night2) 100%);
+    color: var(--parchment);
+    font-family: 'Inter', sans-serif;
+    overflow:hidden;
+    height:100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .fantasy{ font-family:'MedievalSharp', cursive; }
+
+  #app{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:10px;
+  }
+
+  #wrap{
+    width: 660px;
+    max-width: 97vw;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  /* ---------- HUD ---------- */
+  #hud{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: var(--panel);
+    border: 2px solid var(--gold-dark);
+    border-radius: 12px;
+    padding: 8px 14px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.4);
+  }
+  .hud-item{ text-align:center; min-width: 56px; }
+  .hud-item .l{ font-size:10px; letter-spacing:0.04em; color: var(--fog); }
+  .hud-item .v{ font-family:'MedievalSharp',cursive; font-size:20px; color: var(--gold); }
+  #strikes-icons{ display:flex; gap:4px; font-size:16px; }
+  .strike-icon.lost{ opacity:0.25; filter:grayscale(1); }
+  #daynight{ display:flex; flex-direction:column; align-items:center; }
+  #daynight .icon{ font-size:22px; transition: transform 0.4s; }
+  #mute-btn{ background:none; border:none; color:var(--parchment); font-size:18px; cursor:pointer; opacity:0.75; }
+
+  /* ---------- Belt preview ---------- */
+  #belt{
+    display:flex; align-items:center; gap:8px;
+    background: repeating-linear-gradient(45deg, #3A2A1A 0 10px, #453321 10px 20px);
+    border-radius: 10px; padding: 7px 10px; border: 2px solid #241708;
+  }
+  #belt .belt-label{ font-size:10px; color: rgba(241,228,195,0.6); white-space:nowrap; font-family:'MedievalSharp',cursive; }
+  #belt-queue{ display:flex; gap:8px; overflow:hidden; }
+  .belt-chip{
+    background: var(--parchment); color: var(--ink); border-radius: 8px; padding: 5px 8px;
+    font-size: 18px; box-shadow: 0 2px 0 rgba(0,0,0,0.25); flex-shrink:0; opacity:0.85;
+  }
+
+  /* ---------- Package card ---------- */
+  #package-zone{ position:relative; min-height: 128px; display:flex; align-items:center; justify-content:center; }
+  #package-card{
+    background: var(--parchment); color: var(--ink); border-radius: 14px;
+    padding: 14px 22px 12px; width: 100%;
+    box-shadow: 0 5px 0 var(--parchment-dark), 0 5px 18px rgba(0,0,0,0.35);
+    position:relative; transition: transform 0.18s, opacity 0.18s;
+  }
+  #package-card.flash-good{ animation: pulseGood 0.5s; }
+  #package-card.flash-bad{ animation: pulseBad 0.5s; }
+  @keyframes pulseGood{ 0%{ box-shadow:0 0 0 0 rgba(92,138,95,0.7);} 100%{ box-shadow:0 0 0 24px rgba(92,138,95,0);} }
+  @keyframes pulseBad{ 0%{ box-shadow:0 0 0 0 rgba(139,58,58,0.7);} 100%{ box-shadow:0 0 0 24px rgba(139,58,58,0);} }
+
+  #package-emoji{ font-size: 34px; text-align:center; line-height:1; }
+  #package-text{ font-size: 16px; text-align:center; margin-top: 4px; font-weight:600; line-height:1.3; }
+  #package-num{ position:absolute; top:8px; left:12px; font-size:10px; color: rgba(42,31,26,0.45); font-family:'MedievalSharp',cursive; }
+  #timer-track{ height:8px; background: rgba(42,31,26,0.15); border-radius:5px; margin-top: 10px; overflow:hidden; }
+  #timer-fill{ height:100%; background: var(--moss); width:100%; border-radius:5px; }
+
+  .float-pop{
+    position:absolute; left:50%; top:-6px; transform: translateX(-50%);
+    font-family:'MedievalSharp',cursive; font-size: 16px; font-weight:700;
+    pointer-events:none; text-shadow: 0 2px 3px rgba(0,0,0,0.5);
+    animation: floatUp 1.1s ease-out forwards; white-space: nowrap; z-index: 5;
+  }
+  @keyframes floatUp{ 0%{ transform: translate(-50%,0); opacity:1; } 100%{ transform: translate(-50%,-50px); opacity:0; } }
+
+  /* ---------- Canvas world ---------- */
+  #canvas-frame{
+    position: relative; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 0 6px #4A3620;
+  }
+  canvas{ display:block; width: 100%; height: auto; background: #6B5A3E; }
+
+  /* ---------- Controls ---------- */
+  #controls{ display:flex; align-items:center; justify-content:space-between; padding: 4px 6px; }
+  #dpad{ display:grid; grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px 44px; gap:4px; }
+  #dpad button{
+    border:none; border-radius:10px; background: #8B7A5A; color: var(--ink); font-size:17px;
+    box-shadow: 0 2px 0 #5E5238; cursor:pointer;
+  }
+  #dpad button:active{ transform: translateY(1px); box-shadow:none; }
+  #dpad .up{ grid-column:2; grid-row:1; }
+  #dpad .left{ grid-column:1; grid-row:2; }
+  #dpad .down{ grid-column:2; grid-row:2; }
+  #dpad .right{ grid-column:3; grid-row:2; }
+
+  #interact-btn{
+    width: 84px; height:84px; border-radius: 50%; border:none;
+    background: var(--gold); color: var(--ink); font-family:'MedievalSharp', cursive;
+    font-size: 14px; font-weight:700; box-shadow: 0 3px 0 var(--gold-dark); cursor:pointer;
+  }
+  #interact-btn:active{ transform: translateY(2px); box-shadow:none; }
+
+  #hint{ text-align:center; font-size: 11px; color: rgba(241,228,195,0.5); }
+
+  /* ---------- Modals ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background: rgba(15,10,20,0.88);
+    display:flex; align-items:center; justify-content:center; z-index: 50; padding: 20px;
+  }
+  .modal-box{
+    max-width: 460px; background: var(--panel); border: 2px solid var(--gold-dark);
+    border-radius: 16px; padding: 24px 26px; text-align:center; box-shadow: 0 8px 0 rgba(0,0,0,0.4);
+  }
+  .modal-box h1{ font-family:'MedievalSharp',cursive; font-size:32px; color:var(--gold); margin:0 0 6px; }
+  .modal-box h2{ font-family:'MedievalSharp',cursive; font-size:26px; color:var(--gold); margin:0 0 12px; }
+  .modal-box p{ font-size:13.5px; line-height:1.6; color: var(--fog); margin:6px 0; }
+  .rule-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin: 14px 0; text-align:left; }
+  .rule-grid .r{ background: rgba(241,228,195,0.06); border-radius:8px; padding: 7px 9px; font-size:12px; }
+  .rule-grid .r b{ color: var(--gold); font-family:'MedievalSharp',cursive; font-size:13px; }
+  .modal-box button{
+    font-family:'MedievalSharp',cursive; font-size:18px; padding: 11px 28px; border-radius: 30px;
+    border:none; background: var(--moss); color: var(--parchment); cursor:pointer;
+    box-shadow: 0 3px 0 var(--moss-dark); margin-top: 8px;
+  }
+  .modal-box button:active{ transform: translateY(2px); box-shadow:none; }
+  .stats-line{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:14px 0; }
+  .stats-line div{ background: rgba(241,228,195,0.06); border-radius:10px; padding:8px 12px; min-width:70px; }
+  .stats-line .n{ font-family:'MedievalSharp',cursive; font-size:20px; color:var(--gold); }
+  .stats-line .l{ font-size:10px; color: var(--fog); }
+
+  @media (max-width:480px){
+    #package-text{ font-size:14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="wrap">
+
+    <div id="hud">
+      <div class="hud-item"><div class="l">SCORE</div><div class="v" id="score-val">0</div></div>
+      <div class="hud-item"><div class="l">STREAK</div><div class="v" id="streak-val">0</div></div>
+      <div class="hud-item"><div class="l">STRIKES</div><div id="strikes-icons"></div></div>
+      <div id="daynight">
+        <div class="l" style="font-size:10px;color:var(--fog)">SHIFT</div>
+        <div class="icon" id="daynight-icon">🌙</div>
+      </div>
+      <button id="mute-btn" title="Mute">🔊</button>
+    </div>
+
+    <div id="belt">
+      <div class="belt-label">Incoming&nbsp;→</div>
+      <div id="belt-queue"></div>
+    </div>
+
+    <div id="package-zone">
+      <div id="package-card">
+        <div id="package-num">PARCEL #1</div>
+        <div id="package-emoji">📦</div>
+        <div id="package-text">Loading...</div>
+        <div id="timer-track"><div id="timer-fill"></div></div>
+      </div>
+    </div>
+
+    <div id="canvas-frame">
+      <canvas id="game" width="630" height="480"></canvas>
+    </div>
+
+    <div id="controls">
+      <div id="dpad">
+        <button class="up" data-dir="up">▲</button>
+        <button class="left" data-dir="left">◀</button>
+        <button class="down" data-dir="down">▼</button>
+        <button class="right" data-dir="right">▶</button>
+      </div>
+      <button id="interact-btn">DELIVER</button>
+    </div>
+    <div id="hint">WASD / Arrows to walk &middot; Space or E to deliver at the booth you're facing</div>
+
+  </div>
+
+  <div id="start-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <h1>Monster Delivery Service</h1>
+      <p>You're the new courier for Fangmail Express. Carry each parcel across the courtyard and hand it to the right monster's booth before the timer runs out.</p>
+      <div class="rule-grid">
+        <div class="r"><b>🧛 Vampire</b><br>Only accepts deliveries at night</div>
+        <div class="r"><b>🐉 Dragon</b><br>Refuses anything flammable</div>
+        <div class="r"><b>👻 Ghost</b><br>Can't hold physical objects</div>
+        <div class="r"><b>🧌 Troll</b><br>Hates anything with soap</div>
+      </div>
+      <p style="font-size:11.5px">More booths open — and things get weirder — as your shift goes on. If nobody can take a parcel, walk it to the Return booth.</p>
+      <button id="start-btn">Start Shift</button>
+    </div>
+  </div>
+
+  <div id="end-overlay" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h2>Shift's Over!</h2>
+      <div class="stats-line">
+        <div><div class="n" id="end-score">0</div><div class="l">Score</div></div>
+        <div><div class="n" id="end-delivered">0</div><div class="l">Delivered</div></div>
+        <div><div class="n" id="end-mistakes">0</div><div class="l">Mistakes</div></div>
+        <div><div class="n" id="end-streak">0</div><div class="l">Best Streak</div></div>
+      </div>
+      <p id="end-monsters" style="font-size:12px"></p>
+      <button id="restart-btn">Work Another Shift</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ================= CONFIG =================
+const COLS = 9, ROWS = 6, CELL = 70;
+const GRID_OFFSET_Y = 30;
+const PLAYER_SPEED = 210;
+const PLAYER_HALF = 21;
+
+const NIGHT_CYCLE_MS = 14000;
+const RESOLVE_DELAY_MS = 520;
+const START_STRIKES = 4;
+
+const MONSTER_ORDER = [
+  { id:'vampire', name:'Vampire', emoji:'🧛', unlockAt:0, row:0, col:1,
+    rule:'Nights only', fail:'Vampires only accept deliveries at night!',
+    check:(pkg,state)=> state.isNight },
+  { id:'dragon', name:'Dragon', emoji:'🐉', unlockAt:0, row:0, col:3,
+    rule:'No flammables', fail:'Dragons refuse anything flammable!',
+    check:(pkg)=> !pkg.flags.flammable },
+  { id:'ghost', name:'Ghost', emoji:'👻', unlockAt:4, row:0, col:5,
+    rule:'No physical objects', fail:"Ghosts can't hold physical objects!",
+    check:(pkg)=> !pkg.flags.physical },
+  { id:'troll', name:'Troll', emoji:'🧌', unlockAt:9, row:0, col:7,
+    rule:'No soap', fail:'Trolls despise soap!',
+    check:(pkg)=> !pkg.flags.soap },
+  { id:'zombie', name:'Zombie', emoji:'🧟', unlockAt:15, row:5, col:1,
+    rule:'No wet items', fail:'Zombies hate getting wet!',
+    check:(pkg)=> !pkg.flags.wet },
+  { id:'fairy', name:'Fairy', emoji:'🧚', unlockAt:22, row:5, col:3,
+    rule:'No heavy items', fail:"Fairies can't carry anything heavy!",
+    check:(pkg)=> !pkg.flags.heavy },
+];
+const RETURN_BOOTH = { id:'return', name:'Return', emoji:'↩️', row:5, col:5, rule:'Nobody wants this' };
+const ALL_BOOTHS = MONSTER_ORDER.concat([RETURN_BOOTH]);
+
+const CURATED = [
+  { name:'A crate of fresh apples', emoji:'🍎', flags:{physical:true} },
+  { name:'A bottle of lamp oil', emoji:'🛢️', flags:{physical:true, flammable:true} },
+  { name:'A jar of captured moonlight', emoji:'🫙', flags:{physical:false} },
+  { name:'A bar of lavender soap', emoji:'🧼', flags:{physical:true, soap:true} },
+  { name:'A bucket of swamp water', emoji:'🪣', flags:{physical:true, wet:true} },
+  { name:'A boulder-sized fruitcake', emoji:'🎂', flags:{physical:true, heavy:true} },
+  { name:'A crate of squeaky rubber ducks', emoji:'🦆', flags:{physical:true} },
+  { name:"A ghost's forgotten memory", emoji:'👻', flags:{physical:false} },
+];
+
+const ADJECTIVES = [
+  { word:'flaming', flags:{flammable:true} },
+  { word:'oil-soaked', flags:{flammable:true} },
+  { word:'sparking', flags:{flammable:true} },
+  { word:'blazing', flags:{flammable:true} },
+  { word:'soggy', flags:{wet:true} },
+  { word:'dripping', flags:{wet:true} },
+  { word:'waterlogged', flags:{wet:true} },
+  { word:'drenched', flags:{wet:true} },
+  { word:'soapy', flags:{soap:true} },
+  { word:'bubbly', flags:{soap:true} },
+  { word:'lathered', flags:{soap:true} },
+  { word:'soap-scented', flags:{soap:true} },
+  { word:'boulder-sized', flags:{heavy:true} },
+  { word:'anvil-heavy', flags:{heavy:true} },
+  { word:'colossal', flags:{heavy:true} },
+  { word:'gigantic', flags:{heavy:true} },
+  { word:'glittering', flags:{} },
+  { word:'squeaky', flags:{} },
+  { word:'cursed', flags:{} },
+  { word:'singing', flags:{} },
+  { word:'polka-dotted', flags:{} },
+  { word:'grumpy', flags:{} },
+  { word:'suspicious', flags:{} },
+  { word:'majestic', flags:{} },
+  { word:'wobbly', flags:{} },
+  { word:'sentient', flags:{} },
+  { word:'off-key', flags:{} },
+  { word:'triple-wrapped', flags:{} },
+];
+
+const PHYSICAL_NOUNS = ['crate of rubber ducks','fruitcake','birthday candle box','sack of bricks','jar of pickles','music box','cannonball','pillow','teapot','umbrella stand','bag of marbles','wheel of cheese','stack of pancakes','pumpkin','lantern','pair of boots','garden gnome','accordion','chandelier','bowling ball','stack of parchment','birdcage','tea set','anchor','wagon wheel','sack of turnips'];
+const ETHEREAL_NOUNS = ['forgotten memory','whispered secret','captured echo','fading dream','wandering shadow','stolen sunbeam','half-remembered melody','ghostly sigh','stray moonbeam','lost laugh','borrowed nightmare','unspoken apology','flicker of hope','trailing thought'];
+
+// ================= STATE =================
+let canvas, ctx;
+let audioCtx = null, muted = false;
+let running = false, locked = false;
+let lastTs = 0;
+
+let score = 0, strikes = START_STRIKES, streak = 0, bestStreak = 0;
+let delivered = 0, mistakes = 0, missedCount = 0;
+let resolvedCount = 0, spawnCount = 0;
+
+let isNight = true, nightTimer = NIGHT_CYCLE_MS;
+let unlockedIds = [];
+
+let curatedQueue = [];
+let queue = [];
+let pkgTimeLeft = 0;
+let pkgTimeLimit = 9000;
+let parcelCounter = 0;
+
+const keys = {};
+const player = { x: 4.5*CELL, y: 2.5*CELL, dir:'down' };
+
+// ================= HELPERS =================
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function pickN(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function article(word){ return /^[aeiou]/i.test(word) ? 'An' : 'A'; }
+
+function timeLimitFor(n){ return Math.max(3200, 9000 - n*220); }
+function etherealChanceFor(n){ return Math.min(0.35, 0.06 + n*0.012); }
+function maxAdjFor(n){ return 1 + Math.min(3, Math.floor(n/6)); }
+
+function pickEmoji(flags, isEthereal){
+  if(flags.flammable) return pick(['🔥','🧨','💥']);
+  if(flags.wet) return pick(['💧','🌊','🪣']);
+  if(flags.soap) return pick(['🧼','🫧']);
+  if(flags.heavy) return pick(['🪨','⚓','🧱']);
+  if(isEthereal) return pick(['👻','✨','🌙']);
+  return pick(['📦','🎁','🗳️']);
+}
+
+function generatePackage(n){
+  const isEthereal = Math.random() < etherealChanceFor(n);
+  const nounPool = isEthereal ? ETHEREAL_NOUNS : PHYSICAL_NOUNS;
+  const noun = pick(nounPool);
+  const maxAdj = maxAdjFor(n);
+  const adjCount = 1 + Math.floor(Math.random()*maxAdj);
+  const adjs = pickN(ADJECTIVES, adjCount);
+  const flags = { physical: !isEthereal, flammable:false, wet:false, soap:false, heavy:false };
+  adjs.forEach(a=>{ for(const k in a.flags){ if(a.flags[k]) flags[k] = true; } });
+  const first = adjs[0] ? adjs[0].word : noun;
+  const name = article(first) + ' ' + adjs.map(a=>a.word).join(', ') + ' ' + noun;
+  const emoji = pickEmoji(flags, isEthereal);
+  return { name, emoji, flags };
+}
+
+function nextPackage(){
+  spawnCount++;
+  let pkg;
+  if(curatedQueue.length){ pkg = curatedQueue.shift(); }
+  else { pkg = generatePackage(resolvedCount); }
+  parcelCounter++;
+  return Object.assign({ id: parcelCounter }, pkg);
+}
+
+// ================= AUDIO =================
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+}
+function beep(freq, dur, type, delay, vol){
+  if(!audioCtx || muted) return;
+  type = type || 'sine'; delay = delay || 0; vol = vol === undefined ? 0.2 : vol;
+  const t0 = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+dur+0.03);
+}
+function playCorrect(){ beep(660,0.12,'sine'); beep(880,0.16,'sine',0.09); }
+function playWrong(){ beep(180,0.18,'sawtooth'); beep(140,0.24,'sawtooth',0.06); }
+function playMiss(){ beep(220,0.28,'triangle'); }
+function playUnlock(){ beep(523,0.1,'sine'); beep(659,0.1,'sine',0.09); beep(784,0.18,'sine',0.18); }
+function playGameOver(){ beep(392,0.22,'sine'); beep(330,0.22,'sine',0.2); beep(262,0.4,'sine',0.4); }
+function playNightFlip(){ beep(isNight?300:500, 0.1,'sine'); }
+function playClosed(){ beep(200,0.08,'square',0,0.08); }
+
+// ================= DOM REFS =================
+let packageCard, packageEmojiEl, packageTextEl, packageNumEl, timerFillEl, beltQueueEl;
+
+function initDom(){
+  canvas = document.getElementById('game');
+  ctx = canvas.getContext('2d');
+  packageCard = document.getElementById('package-card');
+  packageEmojiEl = document.getElementById('package-emoji');
+  packageTextEl = document.getElementById('package-text');
+  packageNumEl = document.getElementById('package-num');
+  timerFillEl = document.getElementById('timer-fill');
+  beltQueueEl = document.getElementById('belt-queue');
+
+  document.getElementById('start-btn').addEventListener('click', ()=>{ ensureAudio(); startGame(); });
+  document.getElementById('restart-btn').addEventListener('click', ()=>{ ensureAudio(); startGame(); });
+  document.getElementById('mute-btn').addEventListener('click', toggleMute);
+  document.getElementById('interact-btn').addEventListener('click', (e)=>{ e.preventDefault(); doInteract(); });
+
+  document.querySelectorAll('#dpad button').forEach(btn=>{
+    const dir = btn.dataset.dir;
+    const set = (v)=>{ keys['_touch_'+dir] = v; };
+    btn.addEventListener('touchstart', e=>{ e.preventDefault(); set(true); }, {passive:false});
+    btn.addEventListener('touchend', e=>{ e.preventDefault(); set(false); }, {passive:false});
+    btn.addEventListener('mousedown', e=>{ e.preventDefault(); set(true); });
+    btn.addEventListener('mouseup', e=>{ e.preventDefault(); set(false); });
+    btn.addEventListener('mouseleave', e=>{ set(false); });
+  });
+
+  window.addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d',' ','e'].includes(k)) e.preventDefault();
+    keys[k] = true;
+    if(k === ' ' || k === 'e') doInteract();
+  });
+  window.addEventListener('keyup', (e)=>{ keys[e.key.toLowerCase()] = false; });
+}
+
+function toggleMute(){
+  muted = !muted;
+  document.getElementById('mute-btn').textContent = muted ? '🔇' : '🔊';
+}
+
+// ================= RENDER: HUD / CARD / BELT =================
+function renderHud(){
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('streak-val').textContent = streak;
+  const icons = document.getElementById('strikes-icons');
+  icons.innerHTML = '';
+  for(let i=0;i<START_STRIKES;i++){
+    const span = document.createElement('span');
+    span.className = 'strike-icon' + (i < (START_STRIKES-strikes) ? ' lost' : '');
+    span.textContent = '✉️';
+    icons.appendChild(span);
+  }
+  document.getElementById('daynight-icon').textContent = isNight ? '🌙' : '☀️';
+}
+
+function renderPackage(){
+  const active = queue[0];
+  if(!active) return;
+  packageNumEl.textContent = 'PARCEL #' + active.id;
+  packageEmojiEl.textContent = active.emoji;
+  packageTextEl.textContent = active.name;
+  timerFillEl.style.width = '100%';
+  timerFillEl.style.background = '#5C8A5F';
+}
+
+function renderBelt(){
+  beltQueueEl.innerHTML = '';
+  queue.slice(1,4).forEach(p=>{
+    const chip = document.createElement('div');
+    chip.className = 'belt-chip';
+    chip.textContent = p.emoji;
+    beltQueueEl.appendChild(chip);
+  });
+}
+
+function floatPop(text, color){
+  const el = document.createElement('div');
+  el.className = 'float-pop';
+  el.textContent = text;
+  el.style.color = color;
+  packageCard.appendChild(el);
+  setTimeout(()=> el.remove(), 1100);
+}
+
+function flashCard(good){
+  packageCard.classList.add(good ? 'flash-good' : 'flash-bad');
+  setTimeout(()=> packageCard.classList.remove(good?'flash-good':'flash-bad'), 500);
+}
+
+// ================= UNLOCK LOGIC =================
+function updateUnlocks(){
+  const prevCount = unlockedIds.length;
+  unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
+  if(unlockedIds.length > prevCount){
+    if(prevCount > 0){
+      const newest = MONSTER_ORDER.find(m=>m.id===unlockedIds[unlockedIds.length-1]);
+      playUnlock();
+      floatPop(newest.emoji+' '+newest.name+' booth opens!', '#C9A227');
+    }
+  }
+}
+
+// ================= MOVEMENT / COLLISION =================
+function isBlocking(r,c){
+  return r<=0 || r>=ROWS-1 || c<=0 || c>=COLS-1;
+}
+function collides(x,y){
+  const left = x-PLAYER_HALF, right = x+PLAYER_HALF;
+  const top = y-PLAYER_HALF, bottom = y+PLAYER_HALF;
+  const c0 = Math.floor(left/CELL), c1 = Math.floor(right/CELL);
+  const r0 = Math.floor(top/CELL), r1 = Math.floor(bottom/CELL);
+  for(let r=r0;r<=r1;r++){
+    for(let c=c0;c<=c1;c++){ if(isBlocking(r,c)) return true; }
+  }
+  return false;
+}
+function anyKey(...names){ return names.some(n=>keys[n]); }
+
+function updatePlayer(dt){
+  let vx=0, vy=0;
+  if(anyKey('arrowup','w','_touch_up')) vy -= 1;
+  if(anyKey('arrowdown','s','_touch_down')) vy += 1;
+  if(anyKey('arrowleft','a','_touch_left')) vx -= 1;
+  if(anyKey('arrowright','d','_touch_right')) vx += 1;
+
+  if(vx !== 0 || vy !== 0){
+    const len = Math.hypot(vx,vy);
+    vx/=len; vy/=len;
+    if(Math.abs(vx) > Math.abs(vy)) player.dir = vx>0 ? 'right':'left';
+    else if(vy!==0) player.dir = vy>0 ? 'down':'up';
+  }
+
+  const moveX = vx * PLAYER_SPEED * dt;
+  const moveY = vy * PLAYER_SPEED * dt;
+  let newX = player.x + moveX;
+  if(!collides(newX, player.y)) player.x = newX;
+  let newY = player.y + moveY;
+  if(!collides(player.x, newY)) player.y = newY;
+}
+
+function facingTile(){
+  const pr = Math.floor(player.y / CELL);
+  const pc = Math.floor(player.x / CELL);
+  let dr=0, dc=0;
+  if(player.dir === 'up') dr=-1;
+  else if(player.dir === 'down') dr=1;
+  else if(player.dir === 'left') dc=-1;
+  else if(player.dir === 'right') dc=1;
+  return { r: pr+dr, c: pc+dc };
+}
+
+function boothAt(r,c){
+  return ALL_BOOTHS.find(b => b.row === r && b.col === c) || null;
+}
+
+// ================= GAME FLOW =================
+function doInteract(){
+  if(!running || locked) return;
+  const { r, c } = facingTile();
+  const booth = boothAt(r,c);
+  if(!booth) return;
+
+  if(booth.id === 'return'){ resolve('return'); return; }
+  if(!unlockedIds.includes(booth.id)){
+    playClosed();
+    floatPop(booth.name+" booth isn't open yet", '#9a8c6b');
+    return;
+  }
+  resolve(booth.id);
+}
+
+function resolve(choiceId){
+  if(!running || locked) return;
+  locked = true;
+  const pkg = queue[0];
+  const validMonsters = unlockedIds
+    .map(id => MONSTER_ORDER.find(m=>m.id===id))
+    .filter(m => m.check(pkg, { isNight }));
+
+  let good = false;
+  let message = '', color = '#5C8A5F';
+
+  if(choiceId === 'return'){
+    if(validMonsters.length === 0){
+      good = true;
+      const bonus = 8 + Math.min(streak,8)*2;
+      score += bonus; streak++; delivered++;
+      message = '+'+bonus+' correct return!';
+    } else {
+      good = false;
+      score -= 5; strikes--; streak = 0; mistakes++;
+      message = validMonsters[0].name + ' would have taken that!';
+      color = '#C97A6B';
+    }
+  } else {
+    const monster = MONSTER_ORDER.find(m=>m.id===choiceId);
+    good = monster.check(pkg, { isNight });
+    if(good){
+      const bonus = 10 + Math.min(streak,8)*2;
+      score += bonus; streak++; delivered++;
+      message = '+'+bonus+' delivered!';
+    } else {
+      score -= 5; strikes--; streak = 0; mistakes++;
+      message = monster.fail;
+      color = '#C97A6B';
+    }
+  }
+
+  bestStreak = Math.max(bestStreak, streak);
+  resolvedCount++;
+  flashCard(good);
+  floatPop(message, color);
+  if(good) playCorrect(); else playWrong();
+  renderHud();
+
+  if(strikes <= 0){
+    setTimeout(()=> endGame(), RESOLVE_DELAY_MS);
+    return;
+  }
+
+  updateUnlocks();
+
+  setTimeout(()=>{
+    advanceQueue();
+    locked = false;
+  }, RESOLVE_DELAY_MS);
+}
+
+function resolveTimeout(){
+  if(!running || locked) return;
+  locked = true;
+  missedCount++;
+  score -= 3; strikes--; streak = 0;
+  bestStreak = Math.max(bestStreak, streak);
+  resolvedCount++;
+  flashCard(false);
+  floatPop('Too slow — parcel lost!', '#C97A6B');
+  playMiss();
+  renderHud();
+
+  if(strikes <= 0){
+    setTimeout(()=> endGame(), RESOLVE_DELAY_MS);
+    return;
+  }
+  updateUnlocks();
+  setTimeout(()=>{
+    advanceQueue();
+    locked = false;
+  }, RESOLVE_DELAY_MS);
+}
+
+function advanceQueue(){
+  queue.shift();
+  queue.push(nextPackage());
+  pkgTimeLimit = timeLimitFor(resolvedCount);
+  pkgTimeLeft = pkgTimeLimit;
+  renderPackage();
+  renderBelt();
+}
+
+// ================= LOOP =================
+function loop(ts){
+  if(!running) return;
+  if(!lastTs) lastTs = ts;
+  let dt = (ts - lastTs)/1000;
+  if(dt > 0.05) dt = 0.05;
+  lastTs = ts;
+
+  nightTimer -= dt*1000;
+  if(nightTimer <= 0){
+    isNight = !isNight;
+    nightTimer = NIGHT_CYCLE_MS;
+    playNightFlip();
+    renderHud();
+  }
+
+  updatePlayer(dt);
+
+  if(!locked){
+    pkgTimeLeft -= dt*1000;
+    const frac = Math.max(0, pkgTimeLeft/pkgTimeLimit);
+    timerFillEl.style.width = (frac*100)+'%';
+    timerFillEl.style.background = frac>0.5 ? '#5C8A5F' : (frac>0.22 ? '#C9A227' : '#8B3A3A');
+    if(pkgTimeLeft <= 0){ resolveTimeout(); }
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ================= DRAW =================
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // courtyard floor background
+  ctx.fillStyle = '#4A3A26';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      drawCell(r,c);
+    }
+  }
+  drawBoothCaptions();
+  drawPlayer();
+}
+
+function drawCell(r,c){
+  const x = c*CELL, y = r*CELL + GRID_OFFSET_Y;
+  const booth = boothAt(r,c);
+
+  if(!isBlocking(r,c)){
+    const checker = (r+c)%2===0;
+    ctx.fillStyle = checker ? '#EADFC2' : '#DFD2AC';
+    ctx.fillRect(x,y,CELL,CELL);
+    return;
+  }
+
+  if(!booth){
+    // plain wall/hedge tile
+    ctx.fillStyle = '#5B4A30';
+    ctx.fillRect(x,y,CELL,CELL);
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x+1,y+1,CELL-2,CELL-2);
+    return;
+  }
+
+  const unlocked = booth.id === 'return' || unlockedIds.includes(booth.id);
+  ctx.fillStyle = unlocked ? '#7A5E2C' : '#4A3E2A';
+  ctx.fillRect(x,y,CELL,CELL);
+  ctx.strokeStyle = '#2E2410';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x+2,y+2,CELL-4,CELL-4);
+
+  ctx.font = '32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.globalAlpha = unlocked ? 1 : 0.35;
+  ctx.fillText(booth.emoji, x+CELL/2, y+CELL/2);
+  ctx.globalAlpha = 1;
+
+  if(!unlocked){
+    ctx.font = '20px sans-serif';
+    ctx.fillText('🔒', x+CELL/2, y+CELL/2);
+  }
+}
+
+function drawBoothCaptions(){
+  ctx.textAlign = 'center';
+  ALL_BOOTHS.forEach(b=>{
+    const unlocked = b.id === 'return' || unlockedIds.includes(b.id);
+    const x = b.col*CELL + CELL/2;
+    ctx.fillStyle = unlocked ? '#F1E4C3' : 'rgba(241,228,195,0.4)';
+    if(b.row === 0){
+      ctx.font = "bold 11px 'MedievalSharp', cursive";
+      ctx.textBaseline = 'top';
+      ctx.fillText(b.name, x, 2);
+      ctx.font = '8.5px sans-serif';
+      ctx.fillText(b.rule, x, 15);
+    } else if(b.row === ROWS-1){
+      ctx.font = "bold 11px 'MedievalSharp', cursive";
+      ctx.textBaseline = 'top';
+      ctx.fillText(b.name, x, GRID_OFFSET_Y + ROWS*CELL + 2);
+      ctx.font = '8.5px sans-serif';
+      ctx.fillText(b.rule, x, GRID_OFFSET_Y + ROWS*CELL + 15);
+    }
+  });
+}
+
+function drawPlayer(){
+  const x = player.x, y = player.y + GRID_OFFSET_Y;
+  ctx.save();
+  ctx.translate(x,y);
+
+  ctx.beginPath();
+  ctx.arc(0,0,PLAYER_HALF,0,Math.PI*2);
+  ctx.fillStyle = '#C9A227';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#8A6B18';
+  ctx.stroke();
+
+  ctx.beginPath();
+  const dirVec = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[player.dir];
+  ctx.arc(dirVec[0]*PLAYER_HALF*0.75, dirVec[1]*PLAYER_HALF*0.75, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#2A1F1A';
+  ctx.fill();
+
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧑‍✈️', 0, -1);
+  ctx.restore();
+
+  // carried parcel above head
+  const active = queue[0];
+  if(active){
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(active.emoji, x, y - PLAYER_HALF - 14);
+  }
+}
+
+// ================= START / END =================
+function resetState(){
+  score = 0; strikes = START_STRIKES; streak = 0; bestStreak = 0;
+  delivered = 0; mistakes = 0; missedCount = 0;
+  resolvedCount = 0; spawnCount = 0; parcelCounter = 0;
+  isNight = true; nightTimer = NIGHT_CYCLE_MS;
+  curatedQueue = shuffle(CURATED);
+  queue = [];
+  for(let i=0;i<4;i++) queue.push(nextPackage());
+  pkgTimeLimit = timeLimitFor(0);
+  pkgTimeLeft = pkgTimeLimit;
+  unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
+  player.x = 4.5*CELL; player.y = 2.5*CELL; player.dir = 'down';
+  lastTs = 0;
+  locked = false;
+  renderHud();
+  renderPackage();
+  renderBelt();
+}
+
+function startGame(){
+  document.getElementById('start-overlay').style.display = 'none';
+  document.getElementById('end-overlay').style.display = 'none';
+  resetState();
+  running = true;
+  requestAnimationFrame(loop);
+}
+
+function endGame(){
+  running = false;
+  playGameOver();
+  document.getElementById('end-score').textContent = score;
+  document.getElementById('end-delivered').textContent = delivered;
+  document.getElementById('end-mistakes').textContent = mistakes + missedCount;
+  document.getElementById('end-streak').textContent = bestStreak;
+  document.getElementById('end-monsters').textContent =
+    unlockedIds.length + ' of ' + MONSTER_ORDER.length + ' monster booths were open on your route.';
+  document.getElementById('end-overlay').style.display = 'flex';
+}
+
+// ================= INIT =================
+function init(){
+  initDom();
+  unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
+  renderHud();
+  draw();
+}
+init();
+
+})();
+</script>
+</body>
 </html>
