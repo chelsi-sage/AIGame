@@ -608,15 +608,18 @@ function updatePlayer(dt){
   if(!collides(player.x, newY)) player.y = newY;
 }
 
-function facingTile(){
+function adjacentBooth(){
   const pr = Math.floor(player.y / CELL);
   const pc = Math.floor(player.x / CELL);
-  let dr=0, dc=0;
-  if(player.dir === 'up') dr=-1;
-  else if(player.dir === 'down') dr=1;
-  else if(player.dir === 'left') dc=-1;
-  else if(player.dir === 'right') dc=1;
-  return { r: pr+dr, c: pc+dc };
+  const neighbors = [
+    { r: pr-1, c: pc, dir:'up' },
+    { r: pr+1, c: pc, dir:'down' },
+    { r: pr, c: pc-1, dir:'left' },
+    { r: pr, c: pc+1, dir:'right' },
+  ];
+  const found = neighbors.map(n => ({ ...n, booth: boothAt(n.r, n.c) })).filter(n => n.booth);
+  if(found.length === 0) return null;
+  return (found.find(n => n.dir === player.dir) || found[0]).booth;
 }
 
 function boothAt(r,c){
@@ -626,8 +629,7 @@ function boothAt(r,c){
 // ================= GAME FLOW =================
 function doInteract(){
   if(!running || locked) return;
-  const { r, c } = facingTile();
-  const booth = boothAt(r,c);
+  const booth = adjacentBooth();
   if(!booth) return;
 
   if(booth.id === 'return'){ resolve('return'); return; }
@@ -851,12 +853,6 @@ function drawPlayer(){
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#8A6B18';
   ctx.stroke();
-
-  ctx.beginPath();
-  const dirVec = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[player.dir];
-  ctx.arc(dirVec[0]*PLAYER_HALF*0.75, dirVec[1]*PLAYER_HALF*0.75, 5, 0, Math.PI*2);
-  ctx.fillStyle = '#2A1F1A';
-  ctx.fill();
 
   ctx.font = '28px sans-serif';
   ctx.textAlign = 'center';
