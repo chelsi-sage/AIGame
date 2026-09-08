@@ -885,12 +885,28 @@ function endGame(){
   document.getElementById('end-overlay').style.display = 'flex';
 }
 
+function createBoothLabels(){
+  const frame = document.getElementById('canvas-frame');
+  const cvs = document.getElementById('game');
+  ALL_BOOTHS.forEach(b=>{
+    const el = document.createElement('h3');
+    el.className = 'booth-label';
+    el.textContent = b.name;
+    el.style.left = ((b.col*CELL + CELL/2) / cvs.width * 100) + '%';
+    el.style.top  = ((b.row === 0
+      ? GRID_OFFSET_Y + CELL
+      : b.row*CELL + GRID_OFFSET_Y + CELL) / cvs.height * 100) + '%';
+    frame.appendChild(el);
+  });
+}
+
 // ================= INIT =================
 function init(){
   initDom();
   unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
   renderHud();
   draw();
+  createBoothLabels();
 }
 init();
 
