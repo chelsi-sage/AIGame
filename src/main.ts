@@ -1,4 +1,5 @@
 import { Application, Graphics } from "pixi.js";
+import { loadGameContent } from "./utils/load-game-content";
 
 /**
  * Minimal PixiJS 8 scaffold.
@@ -56,7 +57,13 @@ async function start(): Promise<void> {
     placeholder.rotation += 0.005 * ticker.deltaTime;
   });
 
-  setStatus("Game scaffold running — PixiJS 8 renderer active.");
+  // Content is loaded but not yet used: it always resolves, empty on failure.
+  const content = await loadGameContent();
+
+  setStatus(
+    `Game scaffold running — PixiJS 8 renderer active. ` +
+      `Content loaded: ${content.items.length} item(s).`,
+  );
 }
 
 start().catch((error: unknown) => {
