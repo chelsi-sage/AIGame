@@ -11,7 +11,9 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "content:check": "node scripts/check-content.mjs",
+    "check": "node scripts/check-content.mjs && tsc --noEmit && vite build"
   },
   "dependencies": {
     "pixi.js": "^8.6.6"
