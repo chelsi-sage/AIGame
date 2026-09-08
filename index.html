@@ -116,6 +116,21 @@
   }
   @keyframes floatUp{ 0%{ transform: translate(-50%,0); opacity:1; } 100%{ transform: translate(-50%,-50px); opacity:0; } }
 
+  .level-up-banner{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8);
+    font-family:'MedievalSharp',cursive; font-size: 44px; color: var(--gold);
+    text-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 0 24px rgba(201,162,39,0.8);
+    pointer-events:none; white-space:nowrap; z-index: 60;
+    animation: levelUpPop 1.6s ease-out forwards;
+  }
+  @keyframes levelUpPop{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.7); }
+    15%{ opacity:1; transform:translate(-50%,-50%) scale(1.05); }
+    30%{ transform:translate(-50%,-50%) scale(1); }
+    75%{ opacity:1; }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1); }
+  }
+
   /* ---------- Canvas world ---------- */
   #canvas-frame{
     position: relative; border-radius: 14px; overflow: hidden;
@@ -351,6 +366,7 @@ let lastTs = 0;
 let score = 0, strikes = START_STRIKES, streak = 0, bestStreak = 0;
 let delivered = 0, mistakes = 0, missedCount = 0;
 let resolvedCount = 0, spawnCount = 0;
+let speedLevel = 0;
 
 let isNight = true, nightTimer = NIGHT_CYCLE_MS;
 let unlockedIds = [];
@@ -375,6 +391,8 @@ function pickN(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
 function article(word){ return /^[aeiou]/i.test(word) ? 'An' : 'A'; }
 
 function timeLimitFor(n){ return Math.max(3200, 9000 - n*220); }
+function speedMultiplierFor(level){ return Math.pow(1.1, level); }
+function currentTimeLimit(){ return timeLimitFor(resolvedCount) / speedMultiplierFor(speedLevel); }
 function etherealChanceFor(n){ return Math.min(0.35, 0.06 + n*0.012); }
 function maxAdjFor(n){ return 1 + Math.min(3, Math.floor(n/6)); }
 
@@ -517,6 +535,14 @@ function floatPop(text, color){
   setTimeout(()=> el.remove(), 1100);
 }
 
+function showLevelUpBanner(text){
+  const el = document.createElement('div');
+  el.className = 'level-up-banner';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(()=> el.remove(), 1600);
+}
+
 function flashCard(good){
   packageCard.classList.add(good ? 'flash-good' : 'flash-bad');
   setTimeout(()=> packageCard.classList.remove(good?'flash-good':'flash-bad'), 500);
@@ -532,6 +558,15 @@ function updateUnlocks(){
       playUnlock();
       floatPop(newest.emoji+' '+newest.name+' booth opens!', '#C9A227');
     }
+  }
+}
+
+function updateSpeedLevel(){
+  const newLevel = Math.floor(delivered/10);
+  if(newLevel > speedLevel){
+    speedLevel = newLevel;
+    playUnlock();
+    showLevelUpBanner('⚡ Level Up!');
   }
 }
 
@@ -654,6 +689,7 @@ function resolve(choiceId){
   }
 
   updateUnlocks();
+  updateSpeedLevel();
 
   setTimeout(()=>{
     advanceQueue();
@@ -687,7 +723,7 @@ function resolveTimeout(){
 function advanceQueue(){
   queue.shift();
   queue.push(nextPackage());
-  pkgTimeLimit = timeLimitFor(resolvedCount);
+  pkgTimeLimit = currentTimeLimit();
   pkgTimeLeft = pkgTimeLimit;
   renderPackage();
   renderBelt();
@@ -843,11 +879,12 @@ function resetState(){
   score = 0; strikes = START_STRIKES; streak = 0; bestStreak = 0;
   delivered = 0; mistakes = 0; missedCount = 0;
   resolvedCount = 0; spawnCount = 0; parcelCounter = 0;
+  speedLevel = 0;
   isNight = true; nightTimer = NIGHT_CYCLE_MS;
   curatedQueue = shuffle(CURATED);
   queue = [];
   for(let i=0;i<4;i++) queue.push(nextPackage());
-  pkgTimeLimit = timeLimitFor(0);
+  pkgTimeLimit = currentTimeLimit();
   pkgTimeLeft = pkgTimeLimit;
   unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
   player.x = 4.5*CELL; player.y = 1.5*CELL; player.dir = 'down';
