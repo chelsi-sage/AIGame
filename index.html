@@ -892,8 +892,8 @@ function createBoothLabels(){
   });
 
   function positionLabels(){
-    const scaleX = cvs.offsetWidth / cvs.width;
-    const scaleY = cvs.offsetHeight / cvs.height;
+    const scaleX = cvs.offsetWidth / CANVAS_W;
+    const scaleY = cvs.offsetHeight / CANVAS_H;
     frame.querySelectorAll('.booth-label').forEach(el=>{
       const col = +el.dataset.col;
       const row = +el.dataset.row;
