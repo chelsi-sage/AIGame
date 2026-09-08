@@ -120,6 +120,17 @@
   }
   canvas{ display:block; width: 100%; height: auto; background: #6B5A3E; }
 
+  .booth-label{
+    position:absolute; margin:0;
+    font-family:'MedievalSharp',cursive;
+    font-size:16px; line-height:1;
+    color:var(--parchment);
+    transform:translateX(-50%);
+    pointer-events:none;
+    white-space:nowrap;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+
   /* ---------- Controls ---------- */
   #controls{ display:flex; align-items:center; justify-content:space-between; padding: 4px 6px; }
   #dpad{ display:grid; grid-template-columns: 44px 44px 44px; grid-template-rows: 44px 44px 44px; gap:4px; }
