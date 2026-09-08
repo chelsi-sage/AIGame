@@ -30,7 +30,8 @@
     background: radial-gradient(ellipse at top, #33234A 0%, var(--night) 55%, var(--night2) 100%);
     color: var(--parchment);
     font-family: 'Inter', sans-serif;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
     height:100%;
     -webkit-tap-highlight-color: transparent;
   }
@@ -39,18 +40,18 @@
 
   #app{
     display:flex;
-    align-items:center;
     justify-content:center;
-    min-height:100vh;
-    padding:10px;
+    height:100vh;
+    padding:8px;
   }
 
   #wrap{
-    width: 660px;
+    width: 900px;
     max-width: 97vw;
+    height:100%;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:6px;
   }
 
   /* ---------- HUD ---------- */
@@ -60,13 +61,14 @@
     justify-content:space-between;
     background: var(--panel);
     border: 2px solid var(--gold-dark);
-    border-radius: 12px;
-    padding: 8px 14px;
+    border-radius: 10px;
+    padding: 5px 12px;
     box-shadow: 0 3px 0 rgba(0,0,0,0.4);
+    flex: none;
   }
   .hud-item{ text-align:center; min-width: 56px; }
-  .hud-item .l{ font-size:10px; letter-spacing:0.04em; color: var(--fog); }
-  .hud-item .v{ font-family:'MedievalSharp',cursive; font-size:20px; color: var(--gold); }
+  .hud-item .l{ font-size:9px; letter-spacing:0.04em; color: var(--fog); }
+  .hud-item .v{ font-family:'MedievalSharp',cursive; font-size:17px; color: var(--gold); }
   #strikes-icons{ display:flex; gap:4px; font-size:16px; }
   .strike-icon.lost{ opacity:0.25; filter:grayscale(1); }
   #daynight{ display:flex; flex-direction:column; align-items:center; }
@@ -75,23 +77,24 @@
 
   /* ---------- Belt preview ---------- */
   #belt{
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap:6px;
     background: repeating-linear-gradient(45deg, #3A2A1A 0 10px, #453321 10px 20px);
-    border-radius: 10px; padding: 7px 10px; border: 2px solid #241708;
+    border-radius: 8px; padding: 4px 8px; border: 2px solid #241708;
+    flex: none;
   }
   #belt .belt-label{ font-size:10px; color: rgba(241,228,195,0.6); white-space:nowrap; font-family:'MedievalSharp',cursive; }
-  #belt-queue{ display:flex; gap:8px; overflow:hidden; }
+  #belt-queue{ display:flex; gap:6px; overflow:hidden; }
   .belt-chip{
-    background: var(--parchment); color: var(--ink); border-radius: 8px; padding: 5px 8px;
-    font-size: 18px; box-shadow: 0 2px 0 rgba(0,0,0,0.25); flex-shrink:0; opacity:0.85;
+    background: var(--parchment); color: var(--ink); border-radius: 7px; padding: 3px 6px;
+    font-size: 15px; box-shadow: 0 2px 0 rgba(0,0,0,0.25); flex-shrink:0; opacity:0.85;
   }
 
   /* ---------- Package card ---------- */
-  #package-zone{ position:relative; min-height: 128px; display:flex; align-items:center; justify-content:center; }
+  #package-zone{ position:relative; min-height: 78px; display:flex; align-items:center; justify-content:center; flex: none; }
   #package-card{
-    background: var(--parchment); color: var(--ink); border-radius: 14px;
-    padding: 14px 22px 12px; width: 100%;
-    box-shadow: 0 5px 0 var(--parchment-dark), 0 5px 18px rgba(0,0,0,0.35);
+    background: var(--parchment); color: var(--ink); border-radius: 12px;
+    padding: 8px 16px 7px; width: 100%;
+    box-shadow: 0 4px 0 var(--parchment-dark), 0 4px 14px rgba(0,0,0,0.35);
     position:relative; transition: transform 0.18s, opacity 0.18s;
   }
   #package-card.flash-good{ animation: pulseGood 0.5s; }
@@ -99,11 +102,11 @@
   @keyframes pulseGood{ 0%{ box-shadow:0 0 0 0 rgba(92,138,95,0.7);} 100%{ box-shadow:0 0 0 24px rgba(92,138,95,0);} }
   @keyframes pulseBad{ 0%{ box-shadow:0 0 0 0 rgba(139,58,58,0.7);} 100%{ box-shadow:0 0 0 24px rgba(139,58,58,0);} }
 
-  #package-emoji{ font-size: 34px; text-align:center; line-height:1; }
-  #package-text{ font-size: 16px; text-align:center; margin-top: 4px; font-weight:600; line-height:1.3; }
-  #package-num{ position:absolute; top:8px; left:12px; font-size:10px; color: rgba(42,31,26,0.45); font-family:'MedievalSharp',cursive; }
-  #timer-track{ height:8px; background: rgba(42,31,26,0.15); border-radius:5px; margin-top: 10px; overflow:hidden; }
-  #timer-fill{ height:100%; background: var(--moss); width:100%; border-radius:5px; }
+  #package-emoji{ font-size: 24px; text-align:center; line-height:1; }
+  #package-text{ font-size: 13px; text-align:center; margin-top: 2px; font-weight:600; line-height:1.25; }
+  #package-num{ position:absolute; top:6px; left:10px; font-size:9px; color: rgba(42,31,26,0.45); font-family:'MedievalSharp',cursive; }
+  #timer-track{ height:6px; background: rgba(42,31,26,0.15); border-radius:4px; margin-top: 6px; overflow:hidden; }
+  #timer-fill{ height:100%; background: var(--moss); width:100%; border-radius:4px; }
 
   .float-pop{
     position:absolute; left:50%; top:-6px; transform: translateX(-50%);
@@ -117,8 +120,12 @@
   #canvas-frame{
     position: relative; border-radius: 14px; overflow: hidden;
     box-shadow: 0 6px 0 rgba(0,0,0,0.35), 0 0 0 6px #4A3620;
+    flex: 1 1 auto; min-height: 0;
+    display:flex; align-items:center; justify-content:center;
+    background: #6B5A3E;
   }
-  canvas{ display:block; width: 100%; height: auto; background: #6B5A3E; }
+  
+   canvas{ display:block; width: auto; height: auto; max-width: 100%; max-height: 100%; background: #6B5A3E; }
 
   .booth-label{
     position:absolute; margin:0;
@@ -151,7 +158,7 @@
   }
   #interact-btn:active{ transform: translateY(2px); box-shadow:none; }
 
-  #hint{ text-align:center; font-size: 11px; color: rgba(241,228,195,0.5); }
+  #hint{ text-align:center; font-size: 10px; color: rgba(241,228,195,0.5); flex: none; }
 
   /* ---------- Modals ---------- */
   .modal-overlay{
@@ -205,6 +212,10 @@
       <div id="belt-queue"></div>
     </div>
 
+    <div id="canvas-frame">
+      <canvas id="game" width="810" height="390"></canvas>
+    </div>
+
     <div id="package-zone">
       <div id="package-card">
         <div id="package-num">PARCEL #1</div>
@@ -214,19 +225,6 @@
       </div>
     </div>
 
-    <div id="canvas-frame">
-      <canvas id="game" width="630" height="480"></canvas>
-    </div>
-
-    <div id="controls">
-      <div id="dpad">
-        <button class="up" data-dir="up">▲</button>
-        <button class="left" data-dir="left">◀</button>
-        <button class="down" data-dir="down">▼</button>
-        <button class="right" data-dir="right">▶</button>
-      </div>
-      <button id="interact-btn">DELIVER</button>
-    </div>
     <div id="hint">WASD / Arrows to walk &middot; Space or E to deliver at the booth you're facing</div>
 
   </div>
@@ -267,10 +265,10 @@
 "use strict";
 
 // ================= CONFIG =================
-const COLS = 9, ROWS = 6, CELL = 70;
+const COLS = 9, ROWS = 4, CELL = 90;
 const GRID_OFFSET_Y = 30;
-const PLAYER_SPEED = 210;
-const PLAYER_HALF = 21;
+const PLAYER_SPEED = 270;
+const PLAYER_HALF = 27;
 
 const NIGHT_CYCLE_MS = 14000;
 const RESOLVE_DELAY_MS = 520;
@@ -280,23 +278,23 @@ const MONSTER_ORDER = [
   { id:'vampire', name:'Vampire', emoji:'🧛', unlockAt:0, row:0, col:1,
     rule:'Nights only', fail:'Vampires only accept deliveries at night!',
     check:(pkg,state)=> state.isNight },
-  { id:'dragon', name:'Dragon', emoji:'🐉', unlockAt:0, row:0, col:3,
+  { id:'dragon', name:'Dragon', emoji:'🐉', unlockAt:0, row:0, col:2,
     rule:'No flammables', fail:'Dragons refuse anything flammable!',
     check:(pkg)=> !pkg.flags.flammable },
-  { id:'ghost', name:'Ghost', emoji:'👻', unlockAt:4, row:0, col:5,
+  { id:'ghost', name:'Ghost', emoji:'👻', unlockAt:4, row:0, col:3,
     rule:'No physical objects', fail:"Ghosts can't hold physical objects!",
     check:(pkg)=> !pkg.flags.physical },
-  { id:'troll', name:'Troll', emoji:'🧌', unlockAt:9, row:0, col:7,
+  { id:'troll', name:'Troll', emoji:'🧌', unlockAt:9, row:0, col:4,
     rule:'No soap', fail:'Trolls despise soap!',
     check:(pkg)=> !pkg.flags.soap },
-  { id:'zombie', name:'Zombie', emoji:'🧟', unlockAt:15, row:5, col:1,
+  { id:'zombie', name:'Zombie', emoji:'🧟', unlockAt:15, row:0, col:5,
     rule:'No wet items', fail:'Zombies hate getting wet!',
     check:(pkg)=> !pkg.flags.wet },
-  { id:'fairy', name:'Fairy', emoji:'🧚', unlockAt:22, row:5, col:3,
+  { id:'fairy', name:'Fairy', emoji:'🧚', unlockAt:22, row:0, col:6,
     rule:'No heavy items', fail:"Fairies can't carry anything heavy!",
     check:(pkg)=> !pkg.flags.heavy },
 ];
-const RETURN_BOOTH = { id:'return', name:'Return', emoji:'↩️', row:5, col:5, rule:'Nobody wants this' };
+const RETURN_BOOTH = { id:'return', name:'Return', emoji:'↩️', row:0, col:7, rule:'Nobody wants this' };
 const ALL_BOOTHS = MONSTER_ORDER.concat([RETURN_BOOTH]);
 
 const CURATED = [
@@ -345,7 +343,7 @@ const PHYSICAL_NOUNS = ['crate of rubber ducks','fruitcake','birthday candle box
 const ETHEREAL_NOUNS = ['forgotten memory','whispered secret','captured echo','fading dream','wandering shadow','stolen sunbeam','half-remembered melody','ghostly sigh','stray moonbeam','lost laugh','borrowed nightmare','unspoken apology','flicker of hope','trailing thought'];
 
 // ================= STATE =================
-let canvas, ctx;
+let canvas, ctx, CANVAS_W, CANVAS_H;
 let audioCtx = null, muted = false;
 let running = false, locked = false;
 let lastTs = 0;
@@ -364,7 +362,7 @@ let pkgTimeLimit = 9000;
 let parcelCounter = 0;
 
 const keys = {};
-const player = { x: 4.5*CELL, y: 2.5*CELL, dir:'down' };
+const player = { x: 4.5*CELL, y: 1.5*CELL, dir:'down' };
 
 // ================= HELPERS =================
 function shuffle(arr){
@@ -444,6 +442,12 @@ let packageCard, packageEmojiEl, packageTextEl, packageNumEl, timerFillEl, beltQ
 function initDom(){
   canvas = document.getElementById('game');
   ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  CANVAS_W = canvas.width;
+  CANVAS_H = canvas.height;
+  canvas.width = CANVAS_W * dpr;
+  canvas.height = CANVAS_H * dpr;
+  ctx.scale(dpr, dpr);
   packageCard = document.getElementById('package-card');
   packageEmojiEl = document.getElementById('package-emoji');
   packageTextEl = document.getElementById('package-text');
@@ -454,17 +458,6 @@ function initDom(){
   document.getElementById('start-btn').addEventListener('click', ()=>{ ensureAudio(); startGame(); });
   document.getElementById('restart-btn').addEventListener('click', ()=>{ ensureAudio(); startGame(); });
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
-  document.getElementById('interact-btn').addEventListener('click', (e)=>{ e.preventDefault(); doInteract(); });
-
-  document.querySelectorAll('#dpad button').forEach(btn=>{
-    const dir = btn.dataset.dir;
-    const set = (v)=>{ keys['_touch_'+dir] = v; };
-    btn.addEventListener('touchstart', e=>{ e.preventDefault(); set(true); }, {passive:false});
-    btn.addEventListener('touchend', e=>{ e.preventDefault(); set(false); }, {passive:false});
-    btn.addEventListener('mousedown', e=>{ e.preventDefault(); set(true); });
-    btn.addEventListener('mouseup', e=>{ e.preventDefault(); set(false); });
-    btn.addEventListener('mouseleave', e=>{ set(false); });
-  });
 
   window.addEventListener('keydown', (e)=>{
     const k = e.key.toLowerCase();
@@ -560,10 +553,10 @@ function anyKey(...names){ return names.some(n=>keys[n]); }
 
 function updatePlayer(dt){
   let vx=0, vy=0;
-  if(anyKey('arrowup','w','_touch_up')) vy -= 1;
-  if(anyKey('arrowdown','s','_touch_down')) vy += 1;
-  if(anyKey('arrowleft','a','_touch_left')) vx -= 1;
-  if(anyKey('arrowright','d','_touch_right')) vx += 1;
+  if(anyKey('arrowup','w')) vy -= 1;
+  if(anyKey('arrowdown','s')) vy += 1;
+  if(anyKey('arrowleft','a')) vx -= 1;
+  if(anyKey('arrowright','d')) vx += 1;
 
   if(vx !== 0 || vy !== 0){
     const len = Math.hypot(vx,vy);
@@ -732,11 +725,11 @@ function loop(ts){
 
 // ================= DRAW =================
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
 
   // courtyard floor background
   ctx.fillStyle = '#4A3A26';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
 
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
@@ -775,7 +768,7 @@ function drawCell(r,c){
   ctx.lineWidth = 3;
   ctx.strokeRect(x+2,y+2,CELL-4,CELL-4);
 
-  ctx.font = '32px sans-serif';
+  ctx.font = '58px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.globalAlpha = unlocked ? 1 : 0.35;
@@ -783,7 +776,7 @@ function drawCell(r,c){
   ctx.globalAlpha = 1;
 
   if(!unlocked){
-    ctx.font = '20px sans-serif';
+    ctx.font = '32px sans-serif';
     ctx.fillText('🔒', x+CELL/2, y+CELL/2);
   }
 }
@@ -829,7 +822,7 @@ function drawPlayer(){
   ctx.fillStyle = '#2A1F1A';
   ctx.fill();
 
-  ctx.font = '20px sans-serif';
+  ctx.font = '28px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('🧑‍✈️', 0, -1);
@@ -838,10 +831,10 @@ function drawPlayer(){
   // carried parcel above head
   const active = queue[0];
   if(active){
-    ctx.font = '20px sans-serif';
+    ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(active.emoji, x, y - PLAYER_HALF - 14);
+    ctx.fillText(active.emoji, x, y - PLAYER_HALF - 16);
   }
 }
 
@@ -857,7 +850,7 @@ function resetState(){
   pkgTimeLimit = timeLimitFor(0);
   pkgTimeLeft = pkgTimeLimit;
   unlockedIds = MONSTER_ORDER.filter(m => resolvedCount >= m.unlockAt).map(m=>m.id);
-  player.x = 4.5*CELL; player.y = 2.5*CELL; player.dir = 'down';
+  player.x = 4.5*CELL; player.y = 1.5*CELL; player.dir = 'down';
   lastTs = 0;
   locked = false;
   renderHud();
